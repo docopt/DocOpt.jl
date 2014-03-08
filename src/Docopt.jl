@@ -170,8 +170,7 @@ isequal(x::Command, y::Command) = x.name == y.name && x.value == y.value
 isequal(x::Option, y::Option) = x.short == y.short && x.long == y.long && x.argcount == y.argcount && x.value == y.value
 isequal(x::BranchPattern, y::BranchPattern) = isequal(x.children, y.children)
 
-function patternmatch(pattern::LeafPattern, left, collected=nothing)
-    collected = collected === nothing ? Pattern[] : collected
+function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
     pos, match = single_match(pattern, left)
 
     if match === nothing
@@ -208,8 +207,7 @@ function patternmatch(pattern::LeafPattern, left, collected=nothing)
     true, left_, vcat(collected, [match])
 end
 
-function patternmatch(pattern::Union(Optional, OptionsShortcut), left, collected=nothing)
-    collected = collected === nothing ? Pattern[] : collected
+function patternmatch(pattern::Union(Optional, OptionsShortcut), left, collected=Pattern[])
 
     for pat in pattern.children
         m, left, collected = patternmatch(pat, left, collected)
@@ -218,8 +216,7 @@ function patternmatch(pattern::Union(Optional, OptionsShortcut), left, collected
     true, left, collected
 end
 
-function patternmatch(pattern::Either, left, collected=nothing)
-    collected = collected === nothing ? Pattern[] : collected
+function patternmatch(pattern::Either, left, collected=Pattern[])
     outcomes = Any[]
 
     for pat in pattern.children
