@@ -17,7 +17,7 @@ Options:
 
 """
 
-import Docopt: docopt
+import DocOpt: docopt
 
 arguments = docopt(doc; version=v"2.0.0")
 dump(arguments)

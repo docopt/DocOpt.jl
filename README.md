@@ -1,6 +1,6 @@
-# Docopt.jl
+# DocOpt.jl
 
-**Docopt.jl** is a port of [**docopt**](http://docopt.org/) written in the [Julia](http://julialang.org/) language.
+**DocOpt.jl** is a port of [**docopt**](http://docopt.org/) written in the [Julia](http://julialang.org/) language.
 
 **docopt** generates a command-line arguments parser from human-readable usage patterns.
 
@@ -26,7 +26,7 @@ Options:
 
 """
 
-import Docopt: docopt
+import DocOpt: docopt
 
 arguments = docopt(doc; version=v"2.0.0")
 dump(arguments)
@@ -36,7 +36,7 @@ Julia v0.3.0 (prerelease) or later is now supported.
 
 ## API
 
-`Docopt` module exports just one function (`docopt`), which takes only few arguments and most of them are optional.
+`DocOpt` module exports just one function (`docopt`), which takes only few arguments and most of them are optional.
 
 ```julia
 docopt(doc::String, argv=ARGS; help=true, version=nothing, options_first=false, exit_on_error=true)

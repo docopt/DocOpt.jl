@@ -5,7 +5,7 @@ doc = """Usage:
 
 """
 
-import Docopt: docopt
+import DocOpt: docopt
 
 arguments = docopt(doc; version=v"0.1.1")
 dump(arguments)

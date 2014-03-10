@@ -13,5 +13,5 @@ before_install:
   - sudo apt-get update -qq -y
   - sudo apt-get install libpcre3-dev julia -y
 script:
-  - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Docopt"))`); Pkg.pin("Docopt"); Pkg.resolve()'
-  - julia -e 'using Docopt; @assert isdefined(:Docopt); @assert typeof(Docopt) === Module'
+  - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("DocOpt"))`); Pkg.pin("DocOpt"); Pkg.resolve()'
+  - julia -e 'using DocOpt; @assert isdefined(:DocOpt); @assert typeof(DocOpt) === Module'

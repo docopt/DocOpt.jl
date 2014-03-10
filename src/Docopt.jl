@@ -1,4 +1,4 @@
-module Docopt
+module DocOpt
 
 export docopt
 
@@ -20,11 +20,11 @@ end
 
 partition(s::String, delim::Char) = partition(s::String, string(delim))
 
-type DocoptLanguageError <: Exception
+type DocOptLanguageError <: Exception
     msg::String
 end
 
-type DocoptExit <: Exception
+type DocOptExit <: Exception
     usage::String
 end
 
@@ -116,11 +116,11 @@ type Tokens
     tokens::Array{String, 1}
     error::DataType
 
-    function Tokens(source::Array, error=DocoptExit)
+    function Tokens(source::Array, error=DocOptExit)
         new(source, error)
     end
 
-    function Tokens(source::String, error=DocoptLanguageError)
+    function Tokens(source::String, error=DocOptLanguageError)
         source = replace(source, r"([\[\]\(\)\|]|\.\.\.)", s -> " " * s * " ")
         source = matchall(r"\S*<.*?>|\S+", source)
         new(source, error)
@@ -421,7 +421,7 @@ function parse_long(tokens::Tokens, options)
 
     similar = filter(o -> o.long == long, options)
 
-    if tokens.error === DocoptExit && isempty(similar)  # if no exact match
+    if tokens.error === DocOptExit && isempty(similar)  # if no exact match
         similar = filter(o -> !isempty(o.long) && beginswith(o.long, long))
     end
 
@@ -432,7 +432,7 @@ function parse_long(tokens::Tokens, options)
         o = Option(nothing, long, argcount, false)
         push!(options, o)
 
-        if tokens.error === DocoptExit
+        if tokens.error === DocOptExit
             o = Option(nothing, long, argcount, argcount > 0 ? value : true)
         end
     else
@@ -452,7 +452,7 @@ function parse_long(tokens::Tokens, options)
             end
         end
 
-        if tokens.error === DocoptExit
+        if tokens.error === DocOptExit
             o.value = value !== nothing ? value : true
         end
     end
@@ -477,7 +477,7 @@ function parse_shorts(tokens, options)
         elseif length(similar) < 1
             o = Option(short, nothing, 0, false)
             push!(options, o)
-            if tokens.error === DocoptExit
+            if tokens.error === DocOptExit
                 o = Option(short, nothing, 0, true)
             end
         else
@@ -497,7 +497,7 @@ function parse_shorts(tokens, options)
                 end
             end
 
-            if tokens.error === DocoptExit
+            if tokens.error === DocOptExit
                 o.value = value !== nothing ? value : true
             end
        end
@@ -662,15 +662,15 @@ function docopt(doc::String, argv=ARGS; help=true, version=nothing, options_firs
     usage_sections = parse_section("usage:", doc)
 
     if isempty(usage_sections)
-        throw(DocoptLanguageError("\"usage:\" (case-insensitive) not found."))
+        throw(DocOptLanguageError("\"usage:\" (case-insensitive) not found."))
     elseif length(usage_sections) > 1
-        throw(DocoptLanguageError("More than one \"usage:\" (case-insensitive)."))
+        throw(DocOptLanguageError("More than one \"usage:\" (case-insensitive)."))
     end
 
-    docoptexit = DocoptExit(usage_sections[1])
+    docoptexit = DocOptExit(usage_sections[1])
     options = parse_defaults(doc)
     pattern = parse_pattern(formal_usage(docoptexit.usage), options)
-    argv = parse_argv(Tokens(argv, DocoptExit), options, options_first)
+    argv = parse_argv(Tokens(argv, DocOptExit), options, options_first)
     pattern_options = Set(flat(pattern, [Option]))
 
     for options_shortcut in flat(pattern, [OptionsShortcut])
@@ -693,4 +693,4 @@ function docopt(doc::String, argv=ARGS; help=true, version=nothing, options_firs
     end
 end
 
-end  # Docopt
+end  # DocOpt

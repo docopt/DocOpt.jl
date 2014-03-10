@@ -1,8 +1,8 @@
-module TestDocopt
+module TestDocOpt
 
 using Base.Test
-using Docopt  # import docopt method
-import Docopt: DocoptExit,
+using DocOpt  # import docopt method
+import DocOpt: DocOptExit,
                # patterns
                Option,
                Argument,
@@ -18,7 +18,7 @@ import Docopt: DocoptExit,
                fix_identities
 
 function test_pattern_flat()
-    flat = Docopt.flat
+    flat = DocOpt.flat
 
     @test flat(Required([OneOrMore([Argument("N")]),
                          Option("-a"),
@@ -56,7 +56,7 @@ function test_option()
 end
 
 function test_option_name()
-    name = Docopt.name
+    name = DocOpt.name
 
     @test name(Option("-h", nothing)) == "-h"
     @test name(Option("-h", "--help")) == "--help"
@@ -71,7 +71,7 @@ function test_commands()
     @test docopt("Usage: prog (add|rm)", "rm") == {"add" => false, "rm" => true}
     @test docopt("Usage: prog a b", "a b") == {"a" => true, "b" => true}
 
-    # DocoptExit
+    # DocOptExit
     @test_throws docopt("Usage: prog a b", "b a"; exit_on_error=false)
 end
 
@@ -82,15 +82,15 @@ function test_formal_usage()
 
     prog is a program."""
 
-    usage, = Docopt.parse_section("usage:", doc)
+    usage, = DocOpt.parse_section("usage:", doc)
     @test usage == "Usage: prog [-hv] ARG\n       prog N M"
-    @test Docopt.formal_usage(usage) == "( [-hv] ARG ) | ( N M )"
+    @test DocOpt.formal_usage(usage) == "( [-hv] ARG ) | ( N M )"
 end
 
 function test_parse_argv()
     o = [Option("-h"), Option("-v", "--verbose"), Option("-f", "--file", 1)]
-    ts = s -> Docopt.Tokens(s, DocoptExit)
-    parse_argv = Docopt.parse_argv
+    ts = s -> DocOpt.Tokens(s, DocOptExit)
+    parse_argv = DocOpt.parse_argv
 
     @test parse_argv(ts(""), o) == []
     @test parse_argv(ts("-h"), o) == [Option("-h", nothing, 0, true)]
@@ -117,7 +117,7 @@ end
 
 function test_parse_pattern()
     o = [Option("-h"), Option("-v", "--verbose", 0, false), Option("-f", "--file", 1, nothing)]
-    parse_pattern = Docopt.parse_pattern
+    parse_pattern = DocOpt.parse_pattern
 
     @test parse_pattern("[ -h ]", o) == Required([Optional([Option("-h")])])
     @test parse_pattern("[ ARG ...]", o) == Required([Optional([OneOrMore([Argument("ARG")])])])
@@ -294,7 +294,7 @@ function test_basic_pattern_matching()
 end
 
 function test_pattern_either()
-    transform = Docopt.transform
+    transform = DocOpt.transform
 
     @test transform(Option("-a")) == Either([Required([Option("-a")])])
     @test transform(Argument("A")) == Either([Required([Argument("A")])])
@@ -315,7 +315,7 @@ function test_pattern_either()
 end
 
 function test_pattern_fix_repeating_arguments()
-    fix_repeating_arguments = Docopt.fix_repeating_arguments
+    fix_repeating_arguments = DocOpt.fix_repeating_arguments
 
     @test fix_repeating_arguments(Option("-a")) == Option("-a")
     @test fix_repeating_arguments(Argument("N", nothing)) == Argument("N", nothing)
@@ -349,42 +349,42 @@ function test_pattern_fix_identities_2()
 end
 
 function test_long_options_error_handling()
-    # DocoptExit
+    # DocOptExit
     @test_throws docopt("Usage: prog", "--non-existent"; exit_on_error=false)
     @test_throws docopt("Usage: prog [--version --verbose]\nOptions: --version\n --verbose", "--ver"; exit_on_error=false)
 
-    # DocoptLanguageError
+    # DocOptLanguageError
     @test_throws docopt("Usage: prog --long\nOptions: --long ARG"; exit_on_error=false)
 
-    # DocoptExit
+    # DocOptExit
     @test_throws docopt("Usage: prog --long ARG\nOptions: --long ARG", "--long"; exit_on_error=false)
 
-    # DocoptLanguageError
+    # DocOptLanguageError
     @test_throws docopt("Usage: prog --long=ARG\nOptions: --long"; exit_on_error=false)
 
-    # DocoptExit
+    # DocOptExit
     @test_throws docopt("Usage: prog --long\nOptions: --long", "--long=ARG"; exit_on_error=false)
 end
 
 function test_short_options_error_handling()
-    # DocoptLanguageError
+    # DocOptLanguageError
     @test_throws docopt("Usage: prog -x\nOptions: -x  this\n -x  that"; exit_on_error=false)
 
-    # DocoptExit
+    # DocOptExit
     @test_throws docopt("Usage: prog", "-x"; exit_on_error=false)
 
-    # DocoptLanguageError
+    # DocOptLanguageError
     @test_throws docopt("Usage: prog -o\nOptions: -o ARG"; exit_on_error=false)
 
-    # DocoptExit
+    # DocOptExit
     @test_throws docopt("Usage: prog -o ARG\nOptions: -o ARG", "-o"; exit_on_error=false)
 end
 
 function test_matching_paren()
-    # DocoptLanguageError
+    # DocOptLanguageError
     @test_throws docopt("Usage: prog [a [b]"; exit_on_error=false)
 
-    # DocoptLanguageError
+    # DocOptLanguageError
     @test_throws docopt("Usage: prog [a [b] ] c)"; exit_on_error=false)
 end
 
@@ -394,7 +394,7 @@ function test_allow_double_dash()
     @test docopt("usage: prog [-o] [--] <arg>\nkptions: -o", "-o 1") ==
         {"-o" => true, "<arg>" => "1", "--" => false}
 
-    # DocoptExit
+    # DocOptExit
     @test_throws docopt("usage: prog [-o] <arg>\noptions:-o", "-- -o"; exit_on_error=false)
 end
 
@@ -426,10 +426,10 @@ function test_docopt()
     @test a == {"-v" => true, "-q" => false, "-r" => false, "--help" => false,
                 "FILE" => nothing, "INPUT" => nothing, "OUTPUT" => nothing}
 
-    # DocoptExit
+    # DocOptExit
     @test_throws docopt(doc, "-v input.py output.py"; exit_on_error=false)
 
-    # DocoptExit
+    # DocOptExit
     @test_throws docopt(doc, "--fake"; exit_on_error=false)
 
     # SystemExit (in Python)
@@ -437,7 +437,7 @@ function test_docopt()
 end
 
 function test_language_errors()
-    # DocoptLanguageError
+    # DocOptLanguageError
     @test_throws docopt("no usage with colon here"; exit_on_error=false)
     @test_throws docopt("usage: here \n\n and again usage: here"; exit_on_error=false)
 end
@@ -461,7 +461,7 @@ function test_count_multiple_flags()
     @test docopt("usage: prog [-vv]", "-v") == {"-v" => 1}
     @test docopt("usage: prog [-vv]", "-vv") == {"-v" => 2}
 
-    # DocoptExit
+    # DocOptExit
     @test_throws docopt("usage: prog [-vv]", "-vvv"; exit_on_error=false)
 
     @test docopt("usage: prog [-v | -vv | -vvv]", "-vvv") == {"-v" => 3}
@@ -470,7 +470,7 @@ function test_count_multiple_flags()
 end
 
 function test_any_options_parameter()
-    # DocoptExit
+    # DocOptExit
     doc = "usage: prog [options]"
     @test_throws docopt(doc, "-foo --bar --spam=eggs"; exit_on_error=false)
     @test_throws docopt(doc, "--foo --bar --bar"; exit_on_error=false)
@@ -538,7 +538,7 @@ function test_issue_65_evaluate_argv_when_called_not_when_imported()
 end
 
 function test_issue_71_double_dash_is_not_a_valid_option_argument()
-    # DocoptExit
+    # DocOptExit
     @test_throws docopt("usage: prog [--long=LEVEL] [--] <args>...", "--log -- 1 2"; exit_on_error=false)
     @test_throws docopt("""usage: prog [-l LEVEL] [--] <args>...
                            options: -l LEVEL""", "-l -- 1 2"; exit_on_error=false)
@@ -563,7 +563,7 @@ BAZZ
 usage: pit stop"""
 
 function test_parse_section()
-    parse_section = Docopt.parse_section
+    parse_section = DocOpt.parse_section
 
     @test isempty(parse_section("usage:", "foo bar fizz buzz"))
     @test parse_section("usage:", "usage: prog") == ["usage: prog"]
@@ -621,4 +621,4 @@ test_parse_section()
 
 print_with_color(:green, "PASS\n")
 
-end  # TestDocopt
+end  # TestDocOpt
