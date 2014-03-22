@@ -543,13 +543,7 @@ function parse_seq(tokens, options)
     result
 end
 
-function isdash(token)
-    if token == '-' || token == "--"
-        true
-    else
-        false
-    end
-end
+isdash(token) = token == "-" || token == "--"
 
 function parse_atom(tokens, options)
     """atom ::= '(' expr ')' | '[' expr ']' | 'options'
