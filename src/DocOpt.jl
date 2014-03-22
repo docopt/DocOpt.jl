@@ -643,12 +643,12 @@ end
 function extras(help, version, options, doc)
     if help && any(o -> name(o) in ["-h", "--help"] && o.value, options)
         println(rstrip(doc, '\n'))
-        exit(0)
+        isinteractive() || exit(0)
     end
 
     if version !== nothing && any(o -> name(o) == "--version" && o.value , options)
         println(version)
-        exit(0)
+        isinteractive() || exit(0)
     end
 end
 
@@ -681,7 +681,7 @@ function docopt(doc::String, argv=ARGS; help=true, version=nothing, options_firs
 
     if exit_on_error
         @printf(STDERR, "%s\n", docoptexit.usage)
-        exit(1)
+        isinteractive() || exit(1)
     else
         throw(docoptexit)
     end
