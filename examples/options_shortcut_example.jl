@@ -13,7 +13,7 @@ Options:
 
 """
 
-import DocOpt: docopt
+using DocOpt
 
 arguments = docopt(doc; version="1.0.0rc2")
 dump(arguments)
