@@ -19,5 +19,5 @@ Options:
 
 using DocOpt  # import docopt function
 
-arguments = docopt(doc; version=v"2.0.0")
+arguments = docopt(doc, version=v"2.0.0")
 dump(arguments)
