@@ -164,11 +164,10 @@ function single_match(pattern::Option, left)
     nothing, nothing
 end
 
-import Base.isequal
-isequal(x::Argument, y::Argument) = x.name == y.name && x.value == y.value
-isequal(x::Command, y::Command) = x.name == y.name && x.value == y.value
-isequal(x::Option, y::Option) = x.short == y.short && x.long == y.long && x.argcount == y.argcount && x.value == y.value
-isequal(x::BranchPattern, y::BranchPattern) = isequal(x.children, y.children)
+(==)(x::Argument, y::Argument) = x.name == y.name && x.value == y.value
+(==)(x::Command, y::Command) = x.name == y.name && x.value == y.value
+(==)(x::Option, y::Option) = x.short == y.short && x.long == y.long && x.argcount == y.argcount && x.value == y.value
+(==)(x::BranchPattern, y::BranchPattern) = x.children == y.children
 
 function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
     pos, match = single_match(pattern, left)
