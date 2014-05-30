@@ -421,7 +421,7 @@ function parse_long(tokens::Tokens, options)
     similar = filter(o -> o.long == long, options)
 
     if tokens.error === DocOptExit && isempty(similar)  # if no exact match
-        similar = filter(o -> !isempty(o.long) && beginswith(o.long, long))
+        similar = filter(o -> !is(o.long, nothing) && beginswith(o.long, long), options)
     end
 
     if length(similar) > 1  # might be simply specified ambiguously 2+ times?
