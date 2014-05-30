@@ -596,6 +596,4 @@ test_issue_65_evaluate_argv_when_called_not_when_imported()
 test_issue_71_double_dash_is_not_a_valid_option_argument()
 test_parse_section()
 
-print_with_color(:green, "PASS\n")
-
 end  # TestDocOpt
