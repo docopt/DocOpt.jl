@@ -404,15 +404,15 @@ function test_docopt()
 
     """
 
-    a = docopt(doc, "-v file.py")
+    a = docopt(doc, "-v file.jl")
     @test a == {"-v" => true, "-q" => false, "-r" => false, "--help" => false,
-                "FILE" => "file.py", "INPUT" => nothing, "OUTPUT" => nothing}
+                "FILE" => "file.jl", "INPUT" => nothing, "OUTPUT" => nothing}
 
     a = docopt(doc, "-v")
     @test a == {"-v" => true, "-q" => false, "-r" => false, "--help" => false,
                 "FILE" => nothing, "INPUT" => nothing, "OUTPUT" => nothing}
 
-    @test_throws DocOptExit docopt(doc, "-v input.py output.py"; exit_on_error=false)
+    @test_throws DocOptExit docopt(doc, "-v input.jl output.jl"; exit_on_error=false)
     @test_throws DocOptExit docopt(doc, "--fake"; exit_on_error=false)
 
     # SystemExit (in Python)

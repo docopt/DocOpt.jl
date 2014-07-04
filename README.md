@@ -10,12 +10,12 @@ You will find how attractive the idea of **docopt** is with the example below:
 doc = """Naval Fate.
 
 Usage:
-  naval_fate.py ship new <name>...
-  naval_fate.py ship <name> move <x> <y> [--speed=<kn>]
-  naval_fate.py ship shoot <x> <y>
-  naval_fate.py mine (set|remove) <x> <y> [--moored|--drifting]
-  naval_fate.py -h | --help
-  naval_fate.py --version
+  naval_fate.jl ship new <name>...
+  naval_fate.jl ship <name> move <x> <y> [--speed=<kn>]
+  naval_fate.jl ship shoot <x> <y>
+  naval_fate.jl mine (set|remove) <x> <y> [--moored|--drifting]
+  naval_fate.jl -h | --help
+  naval_fate.jl --version
 
 Options:
   -h --help     Show this screen.

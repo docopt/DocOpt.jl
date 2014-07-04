@@ -1,7 +1,7 @@
 doc = """Example of program which uses [options] shortcut in pattern.
 
 Usage:
-  options_shortcut_example.py [options] <port>
+  options_shortcut_example.jl [options] <port>
 
 Options:
   -h --help                show this help message and exit
