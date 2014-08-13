@@ -47,7 +47,7 @@ docopt(doc::String, argv=ARGS; help=true, version=nothing, options_first=false, 
 * `doc` : Description of your command-line interface. (type: `String`)
 * `argv` : Argument vector to be parsed. (type: `String` or `Array{String}`, default: `ARGS`)
 * `help` : Set to `false` to disable automatic help on -h or --help options. (type: `Bool`, default: `true`)
-* `version` : If passed, the value will be printed if --version is in `argv`. (any type, but `VersionNumber` is recommended, i.e. v"1.0.2")
+* `version` : If passed, the value will be printed if --version is in `argv`. (any type, but `VersionNumber` is recommended, e.g. v"1.0.2")
 * `options_first` : Set to `true` to require options precedes positional arguments, i.e. to forbid options and positional arguments intermix. (type: `Bool`, default: `false`)
 * `exit_on_error` : Set to `true` to print the usage and exit when parsing error happens. This option is for unit testing. (type: `Bool`, default: `true`)
 
