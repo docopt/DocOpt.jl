@@ -297,7 +297,7 @@ function patternmatch(pattern::OneOrMore, left, collected=Pattern[])
     false, left, collected
 end
 
-function flat(pattern::LeafPattern, types={})
+function flat(pattern::LeafPattern, types=[])
     if isempty(types) || (typeof(pattern) in types)
         [pattern]
     else
@@ -305,7 +305,7 @@ function flat(pattern::LeafPattern, types={})
     end
 end
 
-function flat(pattern::BranchPattern, types={})
+function flat(pattern::BranchPattern, types=[])
     if typeof(pattern) in types
         [pattern]
     else
@@ -341,7 +341,7 @@ function fix_repeating_arguments(pattern::Pattern)
         for el in filter(child -> count(c -> c == child, case) > 1, case)
             if typeof(el) === Argument || typeof(el) === Option && el.argcount > 0
                 if el.value === nothing
-                    el.value = {}
+                    el.value = []
                 elseif !(typeof(el.value) <: Array)
                     el.value = split(el.value)
                 end
@@ -357,8 +357,8 @@ function fix_repeating_arguments(pattern::Pattern)
 end
 
 function transform(pattern::Pattern)
-    result = {}
-    groups = {Pattern[pattern]}
+    result = Any[]
+    groups = Any[Pattern[pattern]]
 
     while !isempty(groups)
         children = shift!(groups)
