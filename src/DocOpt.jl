@@ -1,5 +1,7 @@
 module DocOpt
 
+using Compat
+
 export docopt
 
 # port of str.partition in Python
@@ -551,7 +553,7 @@ function parse_atom(tokens, options)
 
     token = current(tokens)
     result = Any[]
-    closing = ["(" => (")", Required), "[" => ("]", Optional)]
+    closing = @compat Dict("(" => (")", Required), "[" => ("]", Optional))
 
     if token == "(" || token == "["
         move!(tokens)  # discard '(' or '[' token
@@ -675,7 +677,7 @@ function docopt(doc::String, argv=ARGS; help=true, version=nothing, options_firs
     matched, left, collected = patternmatch(fix(pattern), argv)
 
     if matched && isempty(left)
-        return (String=>Any)[name(a) => a.value for a in vcat(flat(pattern), collected)]
+        return @compat Dict{String,Any}([name(a) => a.value for a in vcat(flat(pattern), collected)])
     end
 
     if exit_on_error
