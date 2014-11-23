@@ -1,6 +1,8 @@
 module TestDocOpt
 
 using Base.Test
+using Compat
+
 using DocOpt  # import docopt method
 import DocOpt: DocOptExit,
                DocOptLanguageError,
@@ -65,12 +67,12 @@ function test_option_name()
 end
 
 function test_commands()
-    @test docopt("Usage: prog add", "add") == {"add" => true}
-    @test docopt("Usage: prog [add]", "") == {"add" => false}
-    @test docopt("Usage: prog [add]", "add") == {"add" => true}
-    @test docopt("Usage: prog (add|rm)", "add") == {"add" => true, "rm" => false}
-    @test docopt("Usage: prog (add|rm)", "rm") == {"add" => false, "rm" => true}
-    @test docopt("Usage: prog a b", "a b") == {"a" => true, "b" => true}
+    @test docopt("Usage: prog add", "add") == @compat Dict("add" => true)
+    @test docopt("Usage: prog [add]", "") == @compat Dict("add" => false)
+    @test docopt("Usage: prog [add]", "add") == @compat Dict("add" => true)
+    @test docopt("Usage: prog (add|rm)", "add") == @compat Dict("add" => true, "rm" => false)
+    @test docopt("Usage: prog (add|rm)", "rm") == @compat Dict("add" => false, "rm" => true)
+    @test docopt("Usage: prog a b", "a b") == @compat Dict("a" => true, "b" => true)
 
     @test_throws DocOptExit docopt("Usage: prog a b", "b a"; exit_on_error=false)
 end
@@ -320,9 +322,9 @@ function test_pattern_fix_repeating_arguments()
     @test fix_repeating_arguments(Option("-a")) == Option("-a")
     @test fix_repeating_arguments(Argument("N", nothing)) == Argument("N", nothing)
     @test fix_repeating_arguments(Required([Argument("N"), Argument("N")])) ==
-        Required([Argument("N", {}), Argument("N", {})])
+        Required([Argument("N", []), Argument("N", [])])
     @test fix(Either([Argument("N"), OneOrMore([Argument("N")])])) ==
-        Either([Argument("N", {}), OneOrMore([Argument("N", {})])])
+        Either([Argument("N", []), OneOrMore([Argument("N", [])])])
 end
 
 function test_set()
@@ -377,9 +379,9 @@ end
 
 function test_allow_double_dash()
     @test docopt("usage: prog [-o] [--] <arg>\nkptions: -o", "-- -o") ==
-        {"-o" => false, "<arg>" => "-o", "--" => true}
+        @compat Dict("-o" => false, "<arg>" => "-o", "--" => true)
     @test docopt("usage: prog [-o] [--] <arg>\nkptions: -o", "-o 1") ==
-        {"-o" => true, "<arg>" => "1", "--" => false}
+        @compat Dict("-o" => true, "<arg>" => "1", "--" => false)
 
     @test_throws DocOptExit docopt("usage: prog [-o] <arg>\noptions:-o", "-- -o"; exit_on_error=false)
 end
@@ -389,8 +391,8 @@ function test_docopt()
 
              Options: -v  Be verbose."""
 
-    @test docopt(doc, "arg") == {"-v" => false, "A" => "arg"}
-    @test docopt(doc, "-v arg") == {"-v" => true, "A" => "arg"}
+    @test docopt(doc, "arg") == @compat Dict("-v" => false, "A" => "arg")
+    @test docopt(doc, "-v arg") == @compat Dict("-v" => true, "A" => "arg")
 
     doc = """Usage: prog [-vqr] [FILE]
               prog INPUT OUTPUT
@@ -405,12 +407,12 @@ function test_docopt()
     """
 
     a = docopt(doc, "-v file.jl")
-    @test a == {"-v" => true, "-q" => false, "-r" => false, "--help" => false,
-                "FILE" => "file.jl", "INPUT" => nothing, "OUTPUT" => nothing}
+    @test a == @compat Dict("-v" => true, "-q" => false, "-r" => false, "--help" => false,
+                        "FILE" => "file.jl", "INPUT" => nothing, "OUTPUT" => nothing)
 
     a = docopt(doc, "-v")
-    @test a == {"-v" => true, "-q" => false, "-r" => false, "--help" => false,
-                "FILE" => nothing, "INPUT" => nothing, "OUTPUT" => nothing}
+    @test a == @compat Dict("-v" => true, "-q" => false, "-r" => false, "--help" => false,
+                        "FILE" => nothing, "INPUT" => nothing, "OUTPUT" => nothing)
 
     @test_throws DocOptExit docopt(doc, "-v input.jl output.jl"; exit_on_error=false)
     @test_throws DocOptExit docopt(doc, "--fake"; exit_on_error=false)
@@ -429,23 +431,23 @@ function test_issue_40()
     # NOTE: This test really exits the program and the rest of the tests will be ignored!
     #@test_throws docopt("usage: prog --help-commands | --help", "--help")
 
-    @test docopt("usage: prog --aabb | --aa", "--aa") == {"--aabb" => false, "--aa" => true}
+    @test docopt("usage: prog --aabb | --aa", "--aa") == @compat Dict("--aabb" => false, "--aa" => true)
 end
 
 function test_issue_34_unicode_strings()
     @test docopt(utf8("usage: prog [-o <a>]"), "") ==
-        {"-o" => false, "<a>" => nothing}
+        @compat Dict("-o" => false, "<a>" => nothing)
 end
 
 function test_count_multiple_flags()
-    @test docopt("usage: prog [-v]", "-v") == {"-v" => true}
-    @test docopt("usage: prog [-vv]", "") == {"-v" => 0}
-    @test docopt("usage: prog [-vv]", "-v") == {"-v" => 1}
-    @test docopt("usage: prog [-vv]", "-vv") == {"-v" => 2}
+    @test docopt("usage: prog [-v]", "-v") == @compat Dict("-v" => true)
+    @test docopt("usage: prog [-vv]", "") == @compat Dict("-v" => 0)
+    @test docopt("usage: prog [-vv]", "-v") == @compat Dict("-v" => 1)
+    @test docopt("usage: prog [-vv]", "-vv") == @compat Dict("-v" => 2)
     @test_throws DocOptExit docopt("usage: prog [-vv]", "-vvv"; exit_on_error=false)
-    @test docopt("usage: prog [-v | -vv | -vvv]", "-vvv") == {"-v" => 3}
-    @test docopt("usage: prog -v...", "-vvvvvv") == {"-v" => 6}
-    @test docopt("usage: prog [--ver --ver]", "--ver --ver") == {"--ver" => 2}
+    @test docopt("usage: prog [-v | -vv | -vvv]", "-vvv") == @compat Dict("-v" => 3)
+    @test docopt("usage: prog -v...", "-vvvvvv") == @compat Dict("-v" => 6)
+    @test docopt("usage: prog [--ver --ver]", "--ver --ver") == @compat Dict("--ver" => 2)
 end
 
 function test_any_options_parameter()
@@ -462,34 +464,34 @@ function test_default_value_for_positional_arguments()
              \t-d --data=<arg>    Input data [default: x]
           """
     a = docopt(doc, "")
-    @test a == {"--data" => ["x"]}
+    @test a == @compat Dict("--data" => ["x"])
 
     doc = """Usage: prog [--data=<data>...]\n
              Options:
              \t-d --data=<arg>    Input data [default: x y]
           """
     a = docopt(doc, "")
-    @test a == {"--data" => ["x", "y"]}
+    @test a == @compat Dict("--data" => ["x", "y"])
 
     a = docopt(doc, "--data=this")
-    @test a == {"--data" => ["this"]}
+    @test a == @compat Dict("--data" => ["this"])
 end
 
 function test_issue_59()
-    @test docopt("usage: prog --long=<a>", "--long=") == {"--long" => ""}
+    @test docopt("usage: prog --long=<a>", "--long=") == @compat Dict("--long" => "")
     @test docopt("""usage: prog -l <a>
-                    options: -l <a>""", ["-l", ""]) == {"-l" => ""}
+                    options: -l <a>""", ["-l", ""]) == @compat Dict("-l" => "")
 end
 
 function test_options_first()
     doc = "usage: prog [--opt] [<args>...]"
 
     @test docopt(doc, "--opt this that") ==
-        {"--opt" => true, "<args>" => ["this", "that"]}
+        @compat Dict("--opt" => true, "<args>" => ["this", "that"])
     @test docopt(doc, "this that --opt") ==
-        {"--opt" => true, "<args>" => ["this", "that"]}
+        @compat Dict("--opt" => true, "<args>" => ["this", "that"])
     @test docopt(doc, "this that --opt"; options_first=true) ==
-        {"--opt" => false, "<args>" => ["this", "that", "--opt"]}
+        @compat Dict("--opt" => false, "<args>" => ["this", "that", "--opt"])
 end
 
 function test_issue_68_options_shortcut_does_not_include_options_in_usage_pattern()
@@ -508,11 +510,11 @@ function test_issue_65_evaluate_argv_when_called_not_when_imported()
 
     doc = "usage: prog [-ab]"
     push!(ARGS, "-a")
-    @test docopt(doc) == {"-a" => true, "-b" => false}
+    @test docopt(doc) == @compat Dict("-a" => true, "-b" => false)
 
     empty!(ARGS)
     push!(ARGS, "-b")
-    @test docopt(doc) == {"-a" => false, "-b" => true}
+    @test docopt(doc) == @compat Dict("-a" => false, "-b" => true)
 end
 
 function test_issue_71_double_dash_is_not_a_valid_option_argument()
