@@ -134,7 +134,7 @@ name(o::Option) = o.long !== nothing ? o.long : o.short
 
 function single_match(pattern::Command, left)
     for (n, pat) in enumerate(left)
-        if typeof(pat) <: Argument
+        if isa(pat, Argument)
             if pat.value == name(pattern)
                 return n, Command(name(pattern), true)
             else
@@ -148,7 +148,7 @@ end
 
 function single_match(pattern::Argument, left)
     for (n, pat) in enumerate(left)
-        if typeof(pat) <: Argument
+        if isa(pat, Argument)
             return n, Argument(name(pattern), pat.value)
         end
     end
@@ -182,11 +182,11 @@ function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
     left_ = vcat(left[1:pos - 1], left[pos + 1:end])
     samename = filter(a -> name(a) == name(pattern), collected)
 
-    if typeof(pattern.value) <: Int || typeof(pattern.value) <: Array
-        if typeof(pattern.value) <: Int
+    if isa(pattern.value, Int) || isa(pattern.value, Array)
+        if isa(pattern.value, Int)
             increment = 1
         else
-            increment = typeof(match.value) <: String ? [match.value] : match.value
+            increment = isa(match.value, String) ? [match.value] : match.value
         end
 
         if isempty(samename)
@@ -194,9 +194,9 @@ function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
             return true, left_, vcat(collected, [match])
         end
 
-        if typeof(samename[1].value) <: Int
+        if isa(samename[1].value, Int)
             samename[1].value += increment
-        elseif typeof(samename[1].value) <: Array
+        elseif isa(samename[1].value, Array)
             append!(samename[1].value, increment)
         else
             @assert false
@@ -321,14 +321,14 @@ function fix(pattern::Pattern)
 end
 
 function fix_identities(pattern::Pattern, uniq=nothing)
-    if !(typeof(pattern) <: BranchPattern)
+    if !isa(pattern, BranchPattern)
         return pattern
     end
 
     uniq = uniq === nothing ? unique(flat(pattern)) : uniq
 
     for (i, child) in enumerate(pattern.children)
-        if !(typeof(child) <: BranchPattern)
+        if !isa(child, BranchPattern)
             pattern.children[i] = uniq[findfirst(uniq, child)]
         else
             fix_identities(child, uniq)
@@ -341,15 +341,15 @@ function fix_repeating_arguments(pattern::Pattern)
 
     for case in either
         for el in filter(child -> count(c -> c == child, case) > 1, case)
-            if typeof(el) === Argument || typeof(el) === Option && el.argcount > 0
+            if isa(el, Argument) || isa(el, Option) && el.argcount > 0
                 if el.value === nothing
                     el.value = []
-                elseif !(typeof(el.value) <: Array)
+                elseif !isa(el.value, Array)
                     el.value = split(el.value)
                 end
             end
 
-            if typeof(el) === Command || typeof(el) === Option && el.argcount == 0
+            if isa(el, Command) || isa(el, Option) && el.argcount == 0
                 el.value = 0
             end
         end
@@ -370,11 +370,11 @@ function transform(pattern::Pattern)
             child = first(filter(c -> typeof(c) in parents, children))
             splice!(children, findfirst(children, child))
 
-            if typeof(child) === Either
+            if isa(child, Either)
                 for c in child.children
                     push!(groups, vcat([c], children))
                 end
-            elseif typeof(child) === OneOrMore
+            elseif isa(child, OneOrMore)
                 push!(groups, vcat(child.children, child.children, children))
             else
                 push!(groups, vcat(child.children, children))
