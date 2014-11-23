@@ -179,7 +179,7 @@ function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
     end
 
     # drop the pos-th match
-    left_ = vcat(left[1:pos - 1], left[pos + 1:end])
+    left_ = vcat(left[1:pos-1], left[pos+1:end])
     samename = filter(a -> name(a) == name(pattern), collected)
 
     if isa(pattern.value, Int) || isa(pattern.value, Array)
