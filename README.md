@@ -34,7 +34,26 @@ arguments = docopt(doc, version=v"2.0.0")
 dump(arguments)
 ```
 
-Julia v0.3.0 (prerelease) or later is now supported.
+The result is:
+
+```
+$ julia naval_fate.jl ship new FOO
+Dict{String,Any} len 15
+  remove: Bool false
+  --help: Bool false
+  <name>: Array(UTF8String,(1,)) UTF8String["FOO"]
+  --drifting: Bool false
+  mine: Bool false
+  move: Bool false
+  --version: Bool false
+  --moored: Bool false
+  <x>: Nothing nothing
+  ship: Bool true
+  new: Bool true
+  ...
+```
+
+Julia v0.3.0 or later is now supported.
 
 ## API
 
