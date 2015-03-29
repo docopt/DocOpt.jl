@@ -70,9 +70,9 @@ type Option <: LeafPattern
         options = replace(options, '=', ' ')
 
         for s in split(options)
-            if beginswith(s, "--")
+            if startswith(s, "--")
                 long = s
-            elseif beginswith(s, '-')
+            elseif startswith(s, '-')
                 short = s
             else
                 argcount = 1
@@ -417,13 +417,13 @@ function parse_long(tokens::Tokens, options)
     """long ::= '--' chars [ ( ' ' | '=' ) chars ] ;"""
 
     long, eq, value = partition(move!(tokens), '=')
-    @assert beginswith(long, "--")
+    @assert startswith(long, "--")
     value = eq == value == "" ? nothing : value
 
     similar = filter(o -> o.long == long, options)
 
     if tokens.error === DocOptExit && isempty(similar)  # if no exact match
-        similar = filter(o -> !is(o.long, nothing) && beginswith(o.long, long), options)
+        similar = filter(o -> !is(o.long, nothing) && startswith(o.long, long), options)
     end
 
     if length(similar) > 1  # might be simply specified ambiguously 2+ times?
@@ -464,7 +464,7 @@ end
 function parse_shorts(tokens, options)
     """shorts ::= '-' ( chars )* [ [ ' ' ] chars ] ;"""
     token = move!(tokens)
-    @assert beginswith(token, '-') && !beginswith(token, "--")
+    @assert startswith(token, '-') && !startswith(token, "--")
     left = lstrip(token, '-')
     parsed = Option[]
 
@@ -567,11 +567,11 @@ function parse_atom(tokens, options)
     elseif token == "options"
         move!(tokens)
         [OptionsShortcut()]
-    elseif beginswith(token, "--") && !isdash(token)
+    elseif startswith(token, "--") && !isdash(token)
         parse_long(tokens, options)
-    elseif beginswith(token, '-') && !isdash(token)
+    elseif startswith(token, '-') && !isdash(token)
         parse_shorts(tokens, options)
-    elseif beginswith(token, '<') && endswith(token, '>') || isupper(token)
+    elseif startswith(token, '<') && endswith(token, '>') || isupper(token)
         [Argument(move!(tokens))]
     else
         [Command(move!(tokens))]
@@ -584,9 +584,9 @@ function parse_argv(tokens::Tokens, options, options_first=false)
     while !isempty(tokens)
         if current(tokens) == "--"
             return append!(parsed, map(v -> Argument(nothing, v), tokens))
-        elseif beginswith(current(tokens), "--")
+        elseif startswith(current(tokens), "--")
             append!(parsed, parse_long(tokens, options))
-        elseif beginswith(current(tokens), "-") && !isdash(current(tokens))
+        elseif startswith(current(tokens), "-") && !isdash(current(tokens))
             append!(parsed, parse_shorts(tokens, options))
         elseif options_first
             return append!(parsed, map(v -> Argument(nothing, v), tokens))
@@ -616,7 +616,7 @@ function parse_defaults(doc)
         _, _, s = partition(s, ':')
         sp = split(s, "\n")
         sp = map(strip, sp)
-        sp = filter!(s -> beginswith(s, '-'), sp)
+        sp = filter!(s -> startswith(s, '-'), sp)
         options = map(Option, sp)
         append!(defaults, options)
     end
