@@ -517,7 +517,7 @@ function parse_expr(tokens, options)
         return seq
     end
 
-    result = length(seq) > 1 ? [Required(seq)] : seq
+    result = length(seq) > 1 ? Pattern[Required(seq)] : seq
 
     while current(tokens) == "|"
         move!(tokens)
@@ -530,7 +530,7 @@ end
 
 function parse_seq(tokens, options)
     """seq ::= ( atom [ '...' ] )* ;"""
-    result = Any[]
+    result = Pattern[]
 
     while !(current(tokens) in [nothing, "]", ")", "|"])
         atom = parse_atom(tokens, options)
@@ -552,7 +552,7 @@ function parse_atom(tokens, options)
     """
 
     token = current(tokens)
-    result = Any[]
+    result = Pattern[]
     closing = @compat Dict("(" => (")", Required), "[" => ("]", Optional))
 
     if token == "(" || token == "["
@@ -579,7 +579,7 @@ function parse_atom(tokens, options)
 end
 
 function parse_argv(tokens::Tokens, options, options_first=false)
-    parsed = Any[]
+    parsed = Pattern[]
 
     while !isempty(tokens)
         if current(tokens) == "--"

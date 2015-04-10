@@ -173,6 +173,7 @@ let
             println("-"^60)
             print(docstring)
             for (arg, expected) in pairs
+                println(arg)
                 args = split(replace(arg, r"prog\s*", ""), r"\s+")
                 args = filter!(a -> !isempty(a), args)
                 local result
@@ -185,7 +186,6 @@ let
                         rethrow()
                     end
                 end
-                println(arg)
                 if result == expected
                     println("=> OK")
                 else
