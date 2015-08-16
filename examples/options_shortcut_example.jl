@@ -1,4 +1,4 @@
-doc = """Example of program which uses [options] shortcut in pattern.
+const doc = """Example of program which uses [options] shortcut in pattern.
 
 Usage:
   options_shortcut_example.jl [options] <port>

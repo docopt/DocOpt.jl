@@ -1,4 +1,4 @@
-doc = """Naval Fate.
+const doc = """Naval Fate.
 
 Usage:
   naval_fate.jl ship new <name>...
