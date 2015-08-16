@@ -1,6 +1,7 @@
 # check the compatibility to the original docopt
 
 using DocOpt
+using Compat
 
 immutable Token
     kind::Symbol
@@ -83,7 +84,7 @@ function token(io)
         value = nothing
     elseif isdigit(char)
         kind = :number
-        value = int(string(char))
+        value = parse(Int, string(char))
     else
         error("unknown token")
     end
