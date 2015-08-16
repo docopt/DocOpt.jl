@@ -10,7 +10,6 @@ import Base:
     start,
     done,
     next,
-    isempty,
     hash
 
 # port of str.partition in Python
@@ -21,10 +20,10 @@ function partition(s::AbstractString, delim::AbstractString)
         return s, "", ""
     elseif length(range) == 1
         # delim is a single character
-        s[1:range[1]-1], delim, s[range[1]+1:end]
+        return s[1:range[1]-1], delim, s[range[1]+1:end]
     else
         start, stop = range
-        s[1:start-1], delim, s[stop+1:end]
+        return s[1:start-1], delim, s[stop+1:end]
     end
 end
 
@@ -45,7 +44,6 @@ abstract BranchPattern <: Pattern
 type Argument <: LeafPattern
     name::Union(AbstractString, Nothing)
     value::Any
-
     function Argument(name, value=nothing)
         new(name, value)
     end
@@ -54,7 +52,6 @@ end
 type Command <: LeafPattern
     name::AbstractString
     value::Any
-
     function Command(name, value=false)
         new(name, value)
     end
@@ -76,7 +73,6 @@ type Option <: LeafPattern
         options, _, description = partition(strip(option_description), "  ")
         options = replace(options, ',', ' ')
         options = replace(options, '=', ' ')
-
         for s in split(options)
             if startswith(s, "--")
                 long = s
@@ -86,12 +82,10 @@ type Option <: LeafPattern
                 argcount = 1
             end
         end
-
         if argcount > 0
             matched = match(r"\[default: (.*)\]"i, description)
             value = matched == nothing ? nothing : matched.captures[1]
         end
-
         new(short, long, argcount, value)
     end
 end
@@ -108,7 +102,6 @@ end
 
 type OptionsShortcut <: BranchPattern
     children::Children
-
     function OptionsShortcut()
         new(Array[])
     end
@@ -125,11 +118,9 @@ end
 type Tokens
     tokens::Array{AbstractString,1}
     error::DataType
-
     function Tokens(source::Array, error=DocOptExit)
         new(source, error)
     end
-
     function Tokens(source::AbstractString, error=DocOptLanguageError)
         source = replace(source, r"([\[\]\(\)\|]|\.\.\.)", s -> " " * s * " ")
         source = matchall(r"\S*<.*?>|\S+", source)
@@ -150,8 +141,7 @@ function single_match(pattern::Command, left)
             end
         end
     end
-
-    nothing, nothing
+    return nothing, nothing
 end
 
 function single_match(pattern::Argument, left)
@@ -160,8 +150,7 @@ function single_match(pattern::Argument, left)
             return n, Argument(name(pattern), pat.value)
         end
     end
-
-    nothing, nothing
+    return nothing, nothing
 end
 
 function single_match(pattern::Option, left)
@@ -170,8 +159,7 @@ function single_match(pattern::Option, left)
             return n, pat
         end
     end
-
-    nothing, nothing
+    return nothing, nothing
 end
 
 (==)(x::Argument, y::Argument) = x.name == y.name && x.value == y.value
@@ -181,27 +169,22 @@ end
 
 function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
     pos, match = single_match(pattern, left)
-
     if match === nothing
         return false, left, collected
     end
-
     # drop the pos-th match
     left_ = vcat(left[1:pos-1], left[pos+1:end])
     samename = filter(a -> name(a) == name(pattern), collected)
-
     if isa(pattern.value, Int) || isa(pattern.value, Array)
         if isa(pattern.value, Int)
             increment = 1
         else
             increment = isa(match.value, AbstractString) ? [match.value] : match.value
         end
-
         if isempty(samename)
             match.value = increment
             return true, left_, vcat(collected, [match])
         end
-
         if isa(samename[1].value, Int)
             samename[1].value += increment
         elseif isa(samename[1].value, Array)
@@ -209,38 +192,30 @@ function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
         else
             @assert false
         end
-
         return true, left_, collected
     end
-
-    true, left_, vcat(collected, [match])
+    return true, left_, vcat(collected, [match])
 end
 
 function patternmatch(pattern::Union(Optional, OptionsShortcut), left, collected=Pattern[])
-
     for pat in pattern.children
         m, left, collected = patternmatch(pat, left, collected)
     end
-
-    true, left, collected
+    return true, left, collected
 end
 
 function patternmatch(pattern::Either, left, collected=Pattern[])
     outcomes = Any[]
-
     for pat in pattern.children
         matched, _, _ = outcome = patternmatch(pat, left, collected)
-
         if matched
             push!(outcomes, outcome)
         end
     end
-
     if !isempty(outcomes)
         return reduce((x, y) -> length(x[2]) < length(y[2]), outcomes[1], outcomes[2:end])
     end
-
-    false, left, collected
+    return false, left, collected
 end
 
 function patternmatch(pattern::Required, left, collected=Pattern[])
@@ -252,24 +227,19 @@ function patternmatch(pattern::Required, left, collected=Pattern[])
             return false, left, collected
         end
     end
-
-    true, l, c
+    return true, l, c
 end
 
 function patternmatch(pattern::Either, left, collected=Pattern[])
     outcomes = Any[]
-
     for pat in pattern.children
         matched, _, _ = outcome = patternmatch(pat, left, collected)
-
         if matched
             push!(outcomes, outcome)
         end
     end
-
     if !isempty(outcomes)
         m = first(outcomes)
-
         for outcome in outcomes
             if length(outcome[2]) < length(m[2])
                 m = outcome
@@ -277,49 +247,43 @@ function patternmatch(pattern::Either, left, collected=Pattern[])
         end
         return m
     end
-
-    false, left, collected
+    return false, left, collected
 end
 
 function patternmatch(pattern::OneOrMore, left, collected=Pattern[])
     @assert length(pattern.children) == 1
-
     l = left
     c = collected
     l_ = nothing
     matched = true
     times = 0
-
     while matched
         matched, l, c = patternmatch(pattern.children[1], l, c)
         times += matched ? 1 : 0
-
         if l_ == l
             break
         end
         l_ = l
     end
-
     if times >= 1
         return true, l, c
     end
-
-    false, left, collected
+    return false, left, collected
 end
 
 function flat(pattern::LeafPattern, types=[])
     if isempty(types) || (typeof(pattern) in types)
-        [pattern]
+        return [pattern]
     else
-        Pattern[]
+        return Pattern[]
     end
 end
 
 function flat(pattern::BranchPattern, types=[])
     if typeof(pattern) in types
-        [pattern]
+        return [pattern]
     else
-        reduce(vcat, Pattern[], [flat(child, types) for child in pattern.children])
+        return reduce(vcat, Pattern[], [flat(child, types) for child in pattern.children])
     end
 end
 
@@ -332,9 +296,7 @@ function fix_identities(pattern::Pattern, uniq=nothing)
     if !isa(pattern, BranchPattern)
         return pattern
     end
-
     uniq = uniq === nothing ? unique(flat(pattern)) : uniq
-
     for (i, child) in enumerate(pattern.children)
         if !isa(child, BranchPattern)
             pattern.children[i] = uniq[findfirst(uniq, child)]
@@ -346,7 +308,6 @@ end
 
 function fix_repeating_arguments(pattern::Pattern)
     either = [child.children for child in transform(pattern).children]
-
     for case in either
         for el in filter(child -> count(c -> c == child, case) > 1, case)
             if isa(el, Argument) || isa(el, Option) && el.argcount > 0
@@ -356,28 +317,23 @@ function fix_repeating_arguments(pattern::Pattern)
                     el.value = split(el.value)
                 end
             end
-
             if isa(el, Command) || isa(el, Option) && el.argcount == 0
                 el.value = 0
             end
         end
     end
-
-    pattern
+    return pattern
 end
 
 function transform(pattern::Pattern)
     result = Any[]
     groups = Any[Pattern[pattern]]
-
     while !isempty(groups)
         children = shift!(groups)
         parents = [Required, Optional, OptionsShortcut, Either, OneOrMore]
-
         if any(map(t -> t in map(typeof, children), parents))
             child = first(filter(c -> typeof(c) in parents, children))
             splice!(children, findfirst(children, child))
-
             if isa(child, Either)
                 for c in child.children
                     push!(groups, vcat([c], children))
@@ -391,8 +347,7 @@ function transform(pattern::Pattern)
             push!(result, children)
         end
     end
-
-    Either([Required(r) for r in result])
+    return Either([Required(r) for r in result])
 end
 
 hash(pattern::Pattern) = pattern |> string |> hash
@@ -402,50 +357,31 @@ start(tokens::Tokens) = 1
 done(tokens::Tokens, i::Int) = i > endof(tokens.tokens)
 next(tokens::Tokens, i::Int) = tokens.tokens[i], i + 1
 
-function move!(tokens::Tokens)
-    if isempty(tokens.tokens)
-        nothing
-    else
-        shift!(tokens.tokens)
-    end
-end
-
-function current(tokens::Tokens)
-    if isempty(tokens.tokens)
-        nothing
-    else
-        tokens[1]
-    end
-end
+move!(tokens::Tokens)   = isempty(tokens.tokens) ? nothing : shift!(tokens.tokens)
+current(tokens::Tokens) = isempty(tokens.tokens) ? nothing : tokens[1]
 
 # parsers
 function parse_long(tokens::Tokens, options)
-    """long ::= '--' chars [ ( ' ' | '=' ) chars ] ;"""
-
+    # long ::= '--' chars [ ( ' ' | '=' ) chars ] ;
     long, eq, value = partition(move!(tokens), '=')
     @assert startswith(long, "--")
     value = eq == value == "" ? nothing : value
-
     similar = filter(o -> o.long == long, options)
-
     if tokens.error === DocOptExit && isempty(similar)  # if no exact match
         similar = filter(o -> !is(o.long, nothing) && startswith(o.long, long), options)
     end
-
     if length(similar) > 1  # might be simply specified ambiguously 2+ times?
         throw(tokens.error("$long is not a unique prefix: $(join(map(s -> s.long, similar), ","))"))
     elseif length(similar) < 1
         argcount = eq == "=" ? 1 : 0
         o = Option(nothing, long, argcount, false)
         push!(options, o)
-
         if tokens.error === DocOptExit
             o = Option(nothing, long, argcount, argcount > 0 ? value : true)
         end
     else
         o = Option(similar[1].short, similar[1].long,
                    similar[1].argcount, similar[1].value)
-
         if o.argcount == 0
             if value !== nothing
                 throw(tokens.error("$long must not have an argument"))
@@ -458,27 +394,23 @@ function parse_long(tokens::Tokens, options)
                 value = move!(tokens)
             end
         end
-
         if tokens.error === DocOptExit
             o.value = value !== nothing ? value : true
         end
     end
-
-    [o]
+    return [o]
 end
 
 function parse_shorts(tokens, options)
-    """shorts ::= '-' ( chars )* [ [ ' ' ] chars ] ;"""
+    # shorts ::= '-' ( chars )* [ [ ' ' ] chars ] ;
     token = move!(tokens)
     @assert startswith(token, '-') && !startswith(token, "--")
     left = lstrip(token, '-')
     parsed = Option[]
-
     while !isempty(left)
         short = string('-', left[1])
         left = left[2:end]
         similar = filter(o -> o.short == short, options)
-
         if length(similar) > 1
             throw(tokens.error("$short is specified ambiguously $(length(similar)) times"))
         elseif length(similar) < 1
@@ -491,7 +423,6 @@ function parse_shorts(tokens, options)
             o = Option(short, similar[1].long,
                        similar[1].argcount, similar[1].value)
             value = nothing
-
             if o.argcount != 0
                 if isempty(left)
                     if current(tokens) in [nothing, "--"]
@@ -503,41 +434,33 @@ function parse_shorts(tokens, options)
                     left = ""
                 end
             end
-
             if tokens.error === DocOptExit
                 o.value = value !== nothing ? value : true
             end
        end
-
         push!(parsed, o)
     end
-
-    parsed
+    return parsed
 end
 
 function parse_expr(tokens, options)
-    """expr ::= seq ( '|' seq )* ;"""
+    # expr ::= seq ( '|' seq )* ;
     seq = parse_seq(tokens, options)
-
     if current(tokens) != "|"
         return seq
     end
-
     result = length(seq) > 1 ? Pattern[Required(seq)] : seq
-
     while current(tokens) == "|"
         move!(tokens)
         seq = parse_seq(tokens, options)
         append!(result, length(seq) > 1 ? [Required(seq)] : seq)
     end
-
-    length(result) > 1 ? [Either(collect(result))] : result
+    return length(result) > 1 ? [Either(collect(result))] : result
 end
 
 function parse_seq(tokens, options)
-    """seq ::= ( atom [ '...' ] )* ;"""
+    # seq ::= ( atom [ '...' ] )* ;
     result = Pattern[]
-
     while !(current(tokens) in [nothing, "]", ")", "|"])
         atom = parse_atom(tokens, options)
         if current(tokens) == "..."
@@ -546,21 +469,17 @@ function parse_seq(tokens, options)
         end
         append!(result, atom)
     end
-
-    result
+    return result
 end
 
 isdash(token) = token == "-" || token == "--"
 
 function parse_atom(tokens, options)
-    """atom ::= '(' expr ')' | '[' expr ']' | 'options'
-              | long | shorts | argument | command ;
-    """
-
+    # atom ::= '(' expr ')' | '[' expr ']' | 'options'
+    #        | long | shorts | argument | command ;
     token = current(tokens)
     result = Pattern[]
     closing = @compat Dict("(" => (")", Required), "[" => ("]", Optional))
-
     if token == "(" || token == "["
         move!(tokens)  # discard '(' or '[' token
         matching, pattern = closing[token]
@@ -569,24 +488,23 @@ function parse_atom(tokens, options)
         if move!(tokens) != matching
             throw(tokens.error("unmatched '$token'"))
         end
-        [result]
+        return [result]
     elseif token == "options"
         move!(tokens)
-        [OptionsShortcut()]
+        return [OptionsShortcut()]
     elseif startswith(token, "--") && !isdash(token)
-        parse_long(tokens, options)
+        return parse_long(tokens, options)
     elseif startswith(token, '-') && !isdash(token)
-        parse_shorts(tokens, options)
+        return parse_shorts(tokens, options)
     elseif startswith(token, '<') && endswith(token, '>') || isupper(token)
-        [Argument(move!(tokens))]
+        return [Argument(move!(tokens))]
     else
-        [Command(move!(tokens))]
+        return [Command(move!(tokens))]
     end
 end
 
 function parse_argv(tokens::Tokens, options, options_first=false)
     parsed = Pattern[]
-
     while !isempty(tokens)
         if current(tokens) == "--"
             return append!(parsed, map(v -> Argument(nothing, v), tokens))
@@ -600,14 +518,13 @@ function parse_argv(tokens::Tokens, options, options_first=false)
             push!(parsed, Argument(nothing, move!(tokens)))
         end
     end
-
-    parsed
+    return parsed
 end
 
 function parse_pattern(source, options)
     tokens = Tokens(source)
     result = parse_expr(tokens, options)
-    Required(result)
+    return Required(result)
 end
 
 function parse_section(name, source)
@@ -617,7 +534,6 @@ end
 
 function parse_defaults(doc)
     defaults = Option[]
-
     for s in parse_section("options:", doc)
         _, _, s = partition(s, ':')
         sp = split(s, "\n")
@@ -626,8 +542,7 @@ function parse_defaults(doc)
         options = map(Option, sp)
         append!(defaults, options)
     end
-
-    defaults
+    return defaults
 end
 
 function formal_usage(section)
@@ -635,7 +550,6 @@ function formal_usage(section)
     words = split(strip(section))
     program = shift!(words)
     patterns = AbstractString[]
-
     for w in words
         if w == program
             push!(patterns, ") | (")
@@ -643,8 +557,7 @@ function formal_usage(section)
             push!(patterns, w)
         end
     end
-
-    string("( ", join(patterns, ' '), " )")
+    return string("( ", join(patterns, ' '), " )")
 end
 
 function extras(help, version, options, doc)
@@ -652,7 +565,6 @@ function extras(help, version, options, doc)
         println(rstrip(doc, '\n'))
         isinteractive() || exit(0)
     end
-
     if version !== nothing && any(o -> name(o) == "--version" && o.value , options)
         println(version)
         isinteractive() || exit(0)
@@ -665,31 +577,25 @@ function docopt(doc::AbstractString, argv=ARGS;
                 options_first::Bool=false,
                 exit_on_error::Bool=true)
     usage_sections = parse_section("usage:", doc)
-
     if isempty(usage_sections)
         throw(DocOptLanguageError("\"usage:\" (case-insensitive) not found."))
     elseif length(usage_sections) > 1
         throw(DocOptLanguageError("More than one \"usage:\" (case-insensitive)."))
     end
-
     docoptexit = DocOptExit(usage_sections[1])
     options = parse_defaults(doc)
     pattern = parse_pattern(formal_usage(docoptexit.usage), options)
     argv = parse_argv(Tokens(argv, DocOptExit), options, options_first)
     pattern_options = Set(flat(pattern, [Option]))
-
     for options_shortcut in flat(pattern, [OptionsShortcut])
         doc_options = parse_defaults(doc)
         options_shortcut.children = Pattern[x for x in setdiff(Set(doc_options), pattern_options)]
     end
-
     extras(help, version, argv, doc)
     matched, left, collected = patternmatch(fix(pattern), argv)
-
     if matched && isempty(left)
         return @compat Dict{AbstractString,Any}([name(a) => a.value for a in vcat(flat(pattern), collected)])
     end
-
     if exit_on_error
         @printf(STDERR, "%s\n", docoptexit.usage)
         isinteractive() || exit(1)
