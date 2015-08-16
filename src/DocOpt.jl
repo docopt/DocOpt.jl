@@ -4,10 +4,18 @@ using Compat
 
 export docopt
 
-# port of str.partition in Python
-function partition(s::String, delim::String)
-    range = search(s, delim)
+import Base:
+    ==,
+    getindex,
+    start,
+    done,
+    next,
+    isempty,
+    hash
 
+# port of str.partition in Python
+function partition(s::AbstractString, delim::AbstractString)
+    range = search(s, delim)
     if length(range) == 0
         # no match
         return s, "", ""
@@ -20,14 +28,14 @@ function partition(s::String, delim::String)
     end
 end
 
-partition(s::String, delim::Char) = partition(s::String, string(delim))
+partition(s::AbstractString, delim::Char) = partition(s::AbstractString, string(delim))
 
 type DocOptLanguageError <: Exception
-    msg::String
+    msg::AbstractString
 end
 
 type DocOptExit <: Exception
-    usage::String
+    usage::AbstractString
 end
 
 abstract Pattern
@@ -35,7 +43,7 @@ abstract LeafPattern <: Pattern
 abstract BranchPattern <: Pattern
 
 type Argument <: LeafPattern
-    name::Union(String, Nothing)
+    name::Union(AbstractString, Nothing)
     value::Any
 
     function Argument(name, value=nothing)
@@ -44,7 +52,7 @@ type Argument <: LeafPattern
 end
 
 type Command <: LeafPattern
-    name::String
+    name::AbstractString
     value::Any
 
     function Command(name, value=false)
@@ -53,8 +61,8 @@ type Command <: LeafPattern
 end
 
 type Option <: LeafPattern
-    short::Union(String, Nothing)
-    long::Union(String, Nothing)
+    short::Union(AbstractString, Nothing)
+    long::Union(AbstractString, Nothing)
     argcount::Int
     value::Any
 
@@ -63,7 +71,7 @@ type Option <: LeafPattern
         new(short, long, argcount, value)
     end
 
-    function Option(option_description::String)
+    function Option(option_description::AbstractString)
         short, long, argcount, value = nothing, nothing, 0, false
         options, _, description = partition(strip(option_description), "  ")
         options = replace(options, ',', ' ')
@@ -88,7 +96,7 @@ type Option <: LeafPattern
     end
 end
 
-typealias Children Array{Pattern, 1}
+typealias Children Array{Pattern,1}
 
 type Required <: BranchPattern
     children::Children
@@ -115,14 +123,14 @@ type Either <: BranchPattern
 end
 
 type Tokens
-    tokens::Array{String, 1}
+    tokens::Array{AbstractString,1}
     error::DataType
 
     function Tokens(source::Array, error=DocOptExit)
         new(source, error)
     end
 
-    function Tokens(source::String, error=DocOptLanguageError)
+    function Tokens(source::AbstractString, error=DocOptLanguageError)
         source = replace(source, r"([\[\]\(\)\|]|\.\.\.)", s -> " " * s * " ")
         source = matchall(r"\S*<.*?>|\S+", source)
         new(source, error)
@@ -186,7 +194,7 @@ function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
         if isa(pattern.value, Int)
             increment = 1
         else
-            increment = isa(match.value, String) ? [match.value] : match.value
+            increment = isa(match.value, AbstractString) ? [match.value] : match.value
         end
 
         if isempty(samename)
@@ -387,10 +395,8 @@ function transform(pattern::Pattern)
     Either([Required(r) for r in result])
 end
 
-import Base.hash
 hash(pattern::Pattern) = pattern |> string |> hash
 
-import Base.start, Base.done, Base.next, Base.isempty
 getindex(tokens::Tokens, i::Integer) = tokens.tokens[i]
 start(tokens::Tokens) = 1
 done(tokens::Tokens, i::Int) = i > endof(tokens.tokens)
@@ -525,7 +531,7 @@ function parse_expr(tokens, options)
         append!(result, length(seq) > 1 ? [Required(seq)] : seq)
     end
 
-    length(result) > 1 ? [Either([result])] : result
+    length(result) > 1 ? [Either(collect(result))] : result
 end
 
 function parse_seq(tokens, options)
@@ -628,7 +634,7 @@ function formal_usage(section)
     _, _, section = partition(section, ':')
     words = split(strip(section))
     program = shift!(words)
-    patterns = String[]
+    patterns = AbstractString[]
 
     for w in words
         if w == program
@@ -653,7 +659,11 @@ function extras(help, version, options, doc)
     end
 end
 
-function docopt(doc::String, argv=ARGS; help=true, version=nothing, options_first=false, exit_on_error=true)
+function docopt(doc::AbstractString, argv=ARGS;
+                help::Bool=true,
+                version=nothing,
+                options_first::Bool=false,
+                exit_on_error::Bool=true)
     usage_sections = parse_section("usage:", doc)
 
     if isempty(usage_sections)
@@ -677,7 +687,7 @@ function docopt(doc::String, argv=ARGS; help=true, version=nothing, options_firs
     matched, left, collected = patternmatch(fix(pattern), argv)
 
     if matched && isempty(left)
-        return @compat Dict{String,Any}([name(a) => a.value for a in vcat(flat(pattern), collected)])
+        return @compat Dict{AbstractString,Any}([name(a) => a.value for a in vcat(flat(pattern), collected)])
     end
 
     if exit_on_error
