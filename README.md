@@ -77,6 +77,6 @@ docopt(doc::String, argv=ARGS; help=true, version=nothing, options_first=false, 
 
 **Returns**
 
-* parsed arguemnts : An associative collection, where keys are names of command-line elements such as e.g. "--verbose" and "<path>", and values are the parsed values of those elements. (type: `Dict{String, Any}`)
+* parsed arguemnts : An associative collection, where keys are names of command-line elements such as e.g. "--verbose" and "<path>", and values are the parsed values of those elements. (type: `Dict{AbstractString, Any}`)
 
 See <http://docopt.org/> for more details about the grammar of the usage pattern.

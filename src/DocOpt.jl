@@ -573,7 +573,34 @@ function extras(help, version, options, doc)
     end
 end
 
-function docopt(doc::AbstractString, argv=ARGS;
+"""
+Parse command-line arguments according to a help message.
+
+See http://docopt.org/ for the description language of help.
+
+    docopt(doc::AbstractString, args::Vector{AbstractString}=ARGS;
+           help::Bool=true,
+           version=nothing,
+           options_first::Bool=false,
+           exit_on_error::Bool=true)
+
+Arguments:
+
+* `doc`: description of your command-line interface.
+* `args`: argument vector to be parsed.
+* `help`: show the help when '-h' or '--help' is passed.
+* `version`: version of your command-line tool (e.g. `v"1.0.2"`).
+* `options_first`: force options to precede positional arguments.
+* `exit_on_error`: print the usage and exit when parsing error happens.
+
+Returns:
+
+A dictionary of arguments as `Dict{AbstractString,Any}`; keys are argument
+names or flag names, and values are argument values passed as command-line
+arguments.
+
+"""
+function docopt(doc::AbstractString, args=ARGS;
                 help::Bool=true,
                 version=nothing,
                 options_first::Bool=false,
@@ -587,14 +614,14 @@ function docopt(doc::AbstractString, argv=ARGS;
     docoptexit = DocOptExit(usage_sections[1])
     options = parse_defaults(doc)
     pattern = parse_pattern(formal_usage(docoptexit.usage), options)
-    argv = parse_argv(Tokens(argv, DocOptExit), options, options_first)
+    args = parse_argv(Tokens(args, DocOptExit), options, options_first)
     pattern_options = Set(flat(pattern, [Option]))
     for options_shortcut in flat(pattern, [OptionsShortcut])
         doc_options = parse_defaults(doc)
         options_shortcut.children = Pattern[x for x in setdiff(Set(doc_options), pattern_options)]
     end
-    extras(help, version, argv, doc)
-    matched, left, collected = patternmatch(fix(pattern), argv)
+    extras(help, version, args, doc)
+    matched, left, collected = patternmatch(fix(pattern), args)
     if matched && isempty(left)
         return @compat Dict{AbstractString,Any}([name(a) => a.value for a in vcat(flat(pattern), collected)])
     end
