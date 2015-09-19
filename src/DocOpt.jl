@@ -44,7 +44,7 @@ abstract LeafPattern <: Pattern
 abstract BranchPattern <: Pattern
 
 type Argument <: LeafPattern
-    name::Union(AbstractString, Nothing)
+    name::Union{AbstractString,@compat Void}
     value::Any
     function Argument(name, value=nothing)
         new(name, value)
@@ -60,8 +60,8 @@ type Command <: LeafPattern
 end
 
 type Option <: LeafPattern
-    short::Union(AbstractString, Nothing)
-    long::Union(AbstractString, Nothing)
+    short::Union{AbstractString,@compat Void}
+    long::Union{AbstractString,@compat Void}
     argcount::Int
     value::Any
 
@@ -199,7 +199,7 @@ function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
     return true, left_, vcat(collected, [match])
 end
 
-function patternmatch(pattern::Union(Optional, OptionsShortcut), left, collected=Pattern[])
+function patternmatch(pattern::Union{Optional,OptionsShortcut}, left, collected=Pattern[])
     for pat in pattern.children
         m, left, collected = patternmatch(pat, left, collected)
     end
