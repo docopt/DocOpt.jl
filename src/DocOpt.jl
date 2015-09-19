@@ -2,8 +2,6 @@ isdefined(Base, :__precompile__) && __precompile__()
 
 module DocOpt
 
-using Compat
-
 export docopt
 
 import Base:
@@ -13,6 +11,8 @@ import Base:
     done,
     next,
     hash
+
+using Compat
 
 # port of str.partition in Python
 function partition(s::AbstractString, delim::AbstractString)
@@ -44,26 +44,22 @@ abstract LeafPattern <: Pattern
 abstract BranchPattern <: Pattern
 
 type Argument <: LeafPattern
-    name::Union{AbstractString,@compat Void}
-    value::Any
-    function Argument(name, value=nothing)
-        new(name, value)
-    end
+    name
+    value
+    Argument(name, value=nothing) = new(name, value)
 end
 
 type Command <: LeafPattern
-    name::AbstractString
-    value::Any
-    function Command(name, value=false)
-        new(name, value)
-    end
+    name
+    value
+    Command(name, value=false) = new(name, value)
 end
 
 type Option <: LeafPattern
-    short::Union{AbstractString,@compat Void}
-    long::Union{AbstractString,@compat Void}
+    short
+    long
     argcount::Int
-    value::Any
+    value
 
     function Option(short=nothing, long=nothing, argcount=0, value=false)
         value = value === false && argcount > 0 ? nothing : value
@@ -92,7 +88,7 @@ type Option <: LeafPattern
     end
 end
 
-typealias Children Array{Pattern,1}
+typealias Children Vector{Pattern}
 
 type Required <: BranchPattern
     children::Children
@@ -104,9 +100,7 @@ end
 
 type OptionsShortcut <: BranchPattern
     children::Children
-    function OptionsShortcut()
-        new(Array[])
-    end
+    OptionsShortcut() = new(Array[])
 end
 
 type OneOrMore <: BranchPattern
@@ -118,7 +112,7 @@ type Either <: BranchPattern
 end
 
 type Tokens
-    tokens::Array{AbstractString,1}
+    tokens::Vector{AbstractString}
     error::DataType
     function Tokens(source::Array, error=DocOptExit)
         new(source, error)
@@ -199,7 +193,7 @@ function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
     return true, left_, vcat(collected, [match])
 end
 
-function patternmatch(pattern::Union{Optional,OptionsShortcut}, left, collected=Pattern[])
+function patternmatch(pattern::(@compat Union{Optional,OptionsShortcut}), left, collected=Pattern[])
     for pat in pattern.children
         m, left, collected = patternmatch(pat, left, collected)
     end
