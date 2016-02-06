@@ -200,20 +200,6 @@ function patternmatch(pattern::(@compat Union{Optional,OptionsShortcut}), left, 
     return true, left, collected
 end
 
-function patternmatch(pattern::Either, left, collected=Pattern[])
-    outcomes = Any[]
-    for pat in pattern.children
-        matched, _, _ = outcome = patternmatch(pat, left, collected)
-        if matched
-            push!(outcomes, outcome)
-        end
-    end
-    if !isempty(outcomes)
-        return reduce((x, y) -> length(x[2]) < length(y[2]), outcomes[1], outcomes[2:end])
-    end
-    return false, left, collected
-end
-
 function patternmatch(pattern::Required, left, collected=Pattern[])
     l = left
     c = collected
