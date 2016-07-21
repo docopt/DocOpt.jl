@@ -587,7 +587,9 @@ test_allow_double_dash()
 test_docopt()
 test_language_errors()
 test_issue_40()
-test_issue_34_unicode_strings()
+if VERSION < v"0.5-"
+    test_issue_34_unicode_strings()
+end
 test_any_options_parameter()
 test_count_multiple_flags()
 test_default_value_for_positional_arguments()
