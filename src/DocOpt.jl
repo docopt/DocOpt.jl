@@ -124,6 +124,12 @@ type Tokens
     end
 end
 
+if VERSION > v"0.5-"
+    function Base.iteratorsize(::Tokens)
+        return Base.SizeUnknown()
+    end
+end
+
 name(pattern::LeafPattern) = pattern.name
 name(o::Option) = o.long !== nothing ? o.long : o.short
 
