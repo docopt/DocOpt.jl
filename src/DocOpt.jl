@@ -609,7 +609,11 @@ function docopt(doc::AbstractString, args=ARGS;
     extras(help, version, args, doc)
     matched, left, collected = patternmatch(fix(pattern), args)
     if matched && isempty(left)
-        return @compat Dict{AbstractString,Any}(name(a) => a.value for a in vcat(flat(pattern), collected))
+        ret = Dict{AbstractString,Any}()
+        for a in vcat(flat(pattern), collected)
+            ret[name(a)] = a.value
+        end
+        return ret
     end
     if exit_on_error
         @printf(STDERR, "%s\n", docoptexit.usage)
