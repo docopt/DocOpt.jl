@@ -4,8 +4,6 @@ module DocOpt
 
 export docopt
 
-using Compat
-
 import Base: ==
 
 # port of str.partition in Python
@@ -118,7 +116,7 @@ type Tokens
     end
 end
 
-if VERSION > v"0.5-"
+if isdefined(Base, :iteratorsize)
     function Base.iteratorsize(::Tokens)
         return Base.SizeUnknown()
     end
@@ -193,7 +191,7 @@ function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
     return true, left_, vcat(collected, [match])
 end
 
-function patternmatch(pattern::(@compat Union{Optional,OptionsShortcut}), left, collected=Pattern[])
+function patternmatch(pattern::Union{Optional,OptionsShortcut}, left, collected=Pattern[])
     for pat in pattern.children
         m, left, collected = patternmatch(pat, left, collected)
     end
@@ -461,7 +459,7 @@ function parse_atom(tokens, options)
     #        | long | shorts | argument | command ;
     token = current(tokens)
     result = Pattern[]
-    closing = @compat Dict("(" => (")", Required), "[" => ("]", Optional))
+    closing = Dict("(" => (")", Required), "[" => ("]", Optional))
     if token == "(" || token == "["
         move!(tokens)  # discard '(' or '[' token
         matching, pattern = closing[token]
