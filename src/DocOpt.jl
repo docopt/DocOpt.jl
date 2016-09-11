@@ -560,35 +560,33 @@ function extras(help, version, options, doc)
 end
 
 """
-Parse command-line arguments according to a help message.
-
-See http://docopt.org/ for the description language of help.
-
-    docopt(doc::AbstractString, args::Vector{AbstractString}=ARGS;
-           help::Bool=true,
+    docopt(doc::AbstractString,
+           args=ARGS;
            version=nothing,
+           help::Bool=true,
            options_first::Bool=false,
            exit_on_error::Bool=true)
 
-Arguments:
+Parse command-line arguments according to a help message.
 
+Parsed command-line arguments are retuned as a dictionary of arguments of type
+`Dict{AbstractString,Any}`; keys are argument names or flag names, and values
+are argument values passed to the command-line arguments.
+
+See http://docopt.org/ for the description language of help.
+
+# Arguments
 * `doc`: description of your command-line interface.
-* `args`: argument vector to be parsed.
-* `help`: show the help when '-h' or '--help' is passed.
-* `version`: version of your command-line tool (e.g. `v"1.0.2"`).
-* `options_first`: force options to precede positional arguments.
-* `exit_on_error`: print the usage and exit when parsing error happens.
-
-Returns:
-
-A dictionary of arguments as `Dict{AbstractString,Any}`; keys are argument
-names or flag names, and values are argument values passed as command-line
-arguments.
-
+* `args=ARGS`: argument vector to be parsed.
+* `version=nothing`: version of your command-line tool (e.g. `v"1.0.2"`).
+* `help=true`: show the help when '-h' or '--help' is passed.
+* `options_first=false`: force options to precede positional arguments.
+* `exit_on_error=true`: print the usage and exit when parsing error happens.
 """
-function docopt(doc::AbstractString, args=ARGS;
-                help::Bool=true,
+function docopt(doc::AbstractString,
+                args=ARGS;
                 version=nothing,
+                help::Bool=true,
                 options_first::Bool=false,
                 exit_on_error::Bool=true)
     usage_sections = parse_section("usage:", doc)
