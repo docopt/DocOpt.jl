@@ -4,15 +4,9 @@ module DocOpt
 
 export docopt
 
-import Base:
-    ==,
-    getindex,
-    start,
-    done,
-    next,
-    hash
-
 using Compat
+
+import Base: ==
 
 # port of str.partition in Python
 function partition(s::AbstractString, delim::AbstractString)
@@ -338,12 +332,12 @@ function transform(pattern::Pattern)
     return Either([Required(r) for r in result])
 end
 
-hash(pattern::Pattern) = pattern |> string |> hash
+Base.hash(pattern::Pattern) = pattern |> string |> hash
 
-getindex(tokens::Tokens, i::Integer) = tokens.tokens[i]
-start(tokens::Tokens) = 1
-done(tokens::Tokens, i::Int) = i > endof(tokens.tokens)
-next(tokens::Tokens, i::Int) = tokens.tokens[i], i + 1
+Base.getindex(tokens::Tokens, i::Integer) = tokens.tokens[i]
+Base.start(tokens::Tokens) = 1
+Base.done(tokens::Tokens, i::Int) = i > endof(tokens.tokens)
+Base.next(tokens::Tokens, i::Int) = tokens.tokens[i], i + 1
 
 move!(tokens::Tokens)   = isempty(tokens.tokens) ? nothing : shift!(tokens.tokens)
 current(tokens::Tokens) = isempty(tokens.tokens) ? nothing : tokens[1]
