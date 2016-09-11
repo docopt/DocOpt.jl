@@ -53,7 +53,7 @@ Dict{String,Any} len 15
   ...
 ```
 
-Julia v0.3.0 or later is now supported.
+Julia v0.4 or later is now supported.
 
 ## API
 
