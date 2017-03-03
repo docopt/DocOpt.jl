@@ -4,6 +4,8 @@ module DocOpt
 
 export docopt
 
+import Compat: @compat
+
 import Base: ==
 
 # port of str.partition in Python
@@ -31,9 +33,9 @@ type DocOptExit <: Exception
     usage::AbstractString
 end
 
-abstract Pattern
-abstract LeafPattern <: Pattern
-abstract BranchPattern <: Pattern
+@compat abstract type Pattern end
+@compat abstract type LeafPattern <: Pattern end
+@compat abstract type BranchPattern <: Pattern end
 
 type Argument <: LeafPattern
     name
@@ -80,7 +82,7 @@ type Option <: LeafPattern
     end
 end
 
-typealias Children Vector{Pattern}
+const Children = Vector{Pattern}
 
 type Required <: BranchPattern
     children::Children
@@ -348,7 +350,7 @@ function parse_long(tokens::Tokens, options)
     value = eq == value == "" ? nothing : value
     similar = filter(o -> o.long == long, options)
     if tokens.error === DocOptExit && isempty(similar)  # if no exact match
-        similar = filter(o -> !is(o.long, nothing) && startswith(o.long, long), options)
+        similar = filter(o -> o.long !== nothing && startswith(o.long, long), options)
     end
     if length(similar) > 1  # might be simply specified ambiguously 2+ times?
         throw(tokens.error("$long is not a unique prefix: $(join(map(s -> s.long, similar), ","))"))
@@ -476,7 +478,7 @@ function parse_atom(tokens, options)
         return parse_long(tokens, options)
     elseif startswith(token, '-') && !isdash(token)
         return parse_shorts(tokens, options)
-    elseif startswith(token, '<') && endswith(token, '>') || isupper(token)
+    elseif startswith(token, '<') && endswith(token, '>') || all(isupper, token)
         return [Argument(move!(tokens))]
     else
         return [Command(move!(tokens))]
