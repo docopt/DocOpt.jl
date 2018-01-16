@@ -116,10 +116,8 @@ mutable struct Tokens
     end
 end
 
-if isdefined(Base, :iteratorsize)
-    function Base.iteratorsize(::Tokens)
-        return Base.SizeUnknown()
-    end
+function Base.iteratorsize(::Tokens)
+    return Base.SizeUnknown()
 end
 
 name(pattern::LeafPattern) = pattern.name
