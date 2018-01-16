@@ -4,8 +4,6 @@ module DocOpt
 
 export docopt
 
-import Compat: @compat
-
 import Base: ==
 
 # port of str.partition in Python
@@ -33,9 +31,9 @@ struct DocOptExit <: Exception
     usage::AbstractString
 end
 
-@compat abstract type Pattern end
-@compat abstract type LeafPattern <: Pattern end
-@compat abstract type BranchPattern <: Pattern end
+abstract type Pattern end
+abstract type LeafPattern <: Pattern end
+abstract type BranchPattern <: Pattern end
 
 mutable struct Argument <: LeafPattern
     name
