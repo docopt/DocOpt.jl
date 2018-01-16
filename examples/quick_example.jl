@@ -7,5 +7,4 @@ const doc = """Usage:
 
 using DocOpt
 
-arguments = docopt(doc, version=v"0.1.1")
-dump(arguments)
+args = docopt(doc, version=v"0.1.1")

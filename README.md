@@ -30,42 +30,48 @@ Options:
 
 using DocOpt  # import docopt function
 
-arguments = docopt(doc, version=v"2.0.0")
-dump(arguments)
+args = docopt(doc, version=v"2.0.0")
 ```
 
 The result is:
 
 ```
-$ julia naval_fate.jl ship new FOO
-Dict{String,Any} len 15
-  remove: Bool false
-  --help: Bool false
-  <name>: Array(UTF8String,(1,)) UTF8String["FOO"]
-  --drifting: Bool false
-  mine: Bool false
-  move: Bool false
-  --version: Bool false
-  --moored: Bool false
-  <x>: Nothing nothing
-  ship: Bool true
-  new: Bool true
-  ...
+$ julia -qL examples/naval_fate.jl ship new FOO
+julia> args
+Dict{String,Any} with 15 entries:
+  "remove"     => false
+  "--help"     => false
+  "<name>"     => String["FOO"]
+  "--drifting" => false
+  "mine"       => false
+  "move"       => false
+  "--version"  => false
+  "--moored"   => false
+  "<x>"        => nothing
+  "ship"       => true
+  "new"        => true
+  "shoot"      => false
+  "set"        => false
+  "<y>"        => nothing
+  "--speed"    => "10"
+
 ```
 
-Julia v0.4 or later is now supported.
+Julia v0.6 is now supported.
+
 
 ## API
 
-`DocOpt` module exports just one function (`docopt`), which takes only few arguments and most of them are optional.
+The `DocOpt` module exports just one function, `docopt`, which takes multiple
+arguments but all of them except the first one are optional.
 
 ```julia
-docopt(doc::String, argv=ARGS; help=true, version=nothing, options_first=false, exit_on_error=true)
+docopt(doc::AbstractString, argv=ARGS; help=true, version=nothing, options_first=false, exit_on_error=true)
 ```
 
-**Parameters**
+**Arguments**
 
-* `doc` : Description of your command-line interface. (type: `String`)
+* `doc` : Description of your command-line interface. (type: `AbstractString`)
 * `argv` : Argument vector to be parsed. (type: `String` or `Vector{String}`, default: `ARGS`)
 * `help` : Set to `false` to disable automatic help on -h or --help options. (type: `Bool`, default: `true`)
 * `version` : If passed, the value will be printed if --version is in `argv`. (any type, but `VersionNumber` is recommended, e.g. v"1.0.2")
@@ -74,9 +80,8 @@ docopt(doc::String, argv=ARGS; help=true, version=nothing, options_first=false, 
 
 `doc` argument is mandatory, `argv` argument is automatically set to command-line arguments, and `help`, `version`, `options_first` and `exit_on_error` are keyword arguments.
 
+**Return**
 
-**Returns**
-
-* parsed arguemnts : An associative collection, where keys are names of command-line elements such as e.g. "--verbose" and "<path>", and values are the parsed values of those elements. (type: `Dict{AbstractString, Any}`)
+* parsed arguemnts : An associative collection, where keys are names of command-line elements such as e.g. "--verbose" and "<path>", and values are the parsed values of those elements. (type: `Dict{String,Any}`)
 
 See <http://docopt.org/> for more details about the grammar of the usage pattern.

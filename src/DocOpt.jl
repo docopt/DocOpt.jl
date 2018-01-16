@@ -4,10 +4,6 @@ module DocOpt
 
 export docopt
 
-import Compat: @compat
-
-import Base: ==
-
 # port of str.partition in Python
 function partition(s::AbstractString, delim::AbstractString)
     range = search(s, delim)
@@ -25,31 +21,31 @@ end
 
 partition(s::AbstractString, delim::Char) = partition(s::AbstractString, string(delim))
 
-type DocOptLanguageError <: Exception
+struct DocOptLanguageError <: Exception
     msg::AbstractString
 end
 
-type DocOptExit <: Exception
+struct DocOptExit <: Exception
     usage::AbstractString
 end
 
-@compat abstract type Pattern end
-@compat abstract type LeafPattern <: Pattern end
-@compat abstract type BranchPattern <: Pattern end
+abstract type Pattern end
+abstract type LeafPattern <: Pattern end
+abstract type BranchPattern <: Pattern end
 
-type Argument <: LeafPattern
+mutable struct Argument <: LeafPattern
     name
     value
     Argument(name, value=nothing) = new(name, value)
 end
 
-type Command <: LeafPattern
+mutable struct Command <: LeafPattern
     name
     value
     Command(name, value=false) = new(name, value)
 end
 
-type Option <: LeafPattern
+mutable struct Option <: LeafPattern
     short
     long
     argcount::Int
@@ -84,29 +80,29 @@ end
 
 const Children = Vector{Pattern}
 
-type Required <: BranchPattern
+mutable struct Required <: BranchPattern
     children::Children
 end
 
-type Optional <: BranchPattern
+mutable struct Optional <: BranchPattern
     children::Children
 end
 
-type OptionsShortcut <: BranchPattern
+mutable struct OptionsShortcut <: BranchPattern
     children::Children
     OptionsShortcut() = new(Array[])
 end
 
-type OneOrMore <: BranchPattern
+mutable struct OneOrMore <: BranchPattern
     children::Children
 end
 
-type Either <: BranchPattern
+mutable struct Either <: BranchPattern
     children::Children
 end
 
-type Tokens
-    tokens::Vector{AbstractString}
+mutable struct Tokens
+    tokens::Vector{String}
     error::DataType
     function Tokens(source::Array, error=DocOptExit)
         new(source, error)
@@ -118,10 +114,8 @@ type Tokens
     end
 end
 
-if isdefined(Base, :iteratorsize)
-    function Base.iteratorsize(::Tokens)
-        return Base.SizeUnknown()
-    end
+function Base.iteratorsize(::Type{Tokens})
+    return Base.SizeUnknown()
 end
 
 name(pattern::LeafPattern) = pattern.name
@@ -158,10 +152,10 @@ function single_match(pattern::Option, left)
     return nothing, nothing
 end
 
-(==)(x::Argument, y::Argument) = x.name == y.name && x.value == y.value
-(==)(x::Command, y::Command) = x.name == y.name && x.value == y.value
-(==)(x::Option, y::Option) = x.short == y.short && x.long == y.long && x.argcount == y.argcount && x.value == y.value
-(==)(x::BranchPattern, y::BranchPattern) = x.children == y.children
+Base.:(==)(x::Argument, y::Argument) = x.name == y.name && x.value == y.value
+Base.:(==)(x::Command, y::Command) = x.name == y.name && x.value == y.value
+Base.:(==)(x::Option, y::Option) = x.short == y.short && x.long == y.long && x.argcount == y.argcount && x.value == y.value
+Base.:(==)(x::BranchPattern, y::BranchPattern) = x.children == y.children
 
 function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
     pos, match = single_match(pattern, left)
@@ -466,7 +460,6 @@ function parse_atom(tokens, options)
         move!(tokens)  # discard '(' or '[' token
         matching, pattern = closing[token]
         result = pattern(parse_expr(tokens, options))
-
         if move!(tokens) != matching
             throw(tokens.error("unmatched '$token'"))
         end
@@ -601,7 +594,7 @@ function docopt(doc::AbstractString,
     extras(help, version, args, doc)
     matched, left, collected = patternmatch(fix(pattern), args)
     if matched && isempty(left)
-        ret = Dict{AbstractString,Any}()
+        ret = Dict{String,Any}()
         for a in vcat(flat(pattern), collected)
             ret[name(a)] = a.value
         end
