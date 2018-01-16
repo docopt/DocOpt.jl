@@ -114,7 +114,7 @@ mutable struct Tokens
     end
 end
 
-function Base.iteratorsize(::Tokens)
+function Base.iteratorsize(::Type{Tokens})
     return Base.SizeUnknown()
 end
 
