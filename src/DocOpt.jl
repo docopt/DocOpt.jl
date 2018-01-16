@@ -25,11 +25,11 @@ end
 
 partition(s::AbstractString, delim::Char) = partition(s::AbstractString, string(delim))
 
-type DocOptLanguageError <: Exception
+struct DocOptLanguageError <: Exception
     msg::AbstractString
 end
 
-type DocOptExit <: Exception
+struct DocOptExit <: Exception
     usage::AbstractString
 end
 
@@ -37,19 +37,19 @@ end
 @compat abstract type LeafPattern <: Pattern end
 @compat abstract type BranchPattern <: Pattern end
 
-type Argument <: LeafPattern
+mutable struct Argument <: LeafPattern
     name
     value
     Argument(name, value=nothing) = new(name, value)
 end
 
-type Command <: LeafPattern
+mutable struct Command <: LeafPattern
     name
     value
     Command(name, value=false) = new(name, value)
 end
 
-type Option <: LeafPattern
+mutable struct Option <: LeafPattern
     short
     long
     argcount::Int
@@ -84,28 +84,28 @@ end
 
 const Children = Vector{Pattern}
 
-type Required <: BranchPattern
+mutable struct Required <: BranchPattern
     children::Children
 end
 
-type Optional <: BranchPattern
+mutable struct Optional <: BranchPattern
     children::Children
 end
 
-type OptionsShortcut <: BranchPattern
+mutable struct OptionsShortcut <: BranchPattern
     children::Children
     OptionsShortcut() = new(Array[])
 end
 
-type OneOrMore <: BranchPattern
+mutable struct OneOrMore <: BranchPattern
     children::Children
 end
 
-type Either <: BranchPattern
+mutable struct Either <: BranchPattern
     children::Children
 end
 
-type Tokens
+mutable struct Tokens
     tokens::Vector{AbstractString}
     error::DataType
     function Tokens(source::Array, error=DocOptExit)
