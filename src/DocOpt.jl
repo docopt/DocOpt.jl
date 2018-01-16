@@ -102,7 +102,7 @@ mutable struct Either <: BranchPattern
 end
 
 mutable struct Tokens
-    tokens::Vector{AbstractString}
+    tokens::Vector{String}
     error::DataType
     function Tokens(source::Array, error=DocOptExit)
         new(source, error)
@@ -460,7 +460,6 @@ function parse_atom(tokens, options)
         move!(tokens)  # discard '(' or '[' token
         matching, pattern = closing[token]
         result = pattern(parse_expr(tokens, options))
-
         if move!(tokens) != matching
             throw(tokens.error("unmatched '$token'"))
         end
