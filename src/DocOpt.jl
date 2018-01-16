@@ -4,8 +4,6 @@ module DocOpt
 
 export docopt
 
-import Base: ==
-
 # port of str.partition in Python
 function partition(s::AbstractString, delim::AbstractString)
     range = search(s, delim)
@@ -154,10 +152,10 @@ function single_match(pattern::Option, left)
     return nothing, nothing
 end
 
-(==)(x::Argument, y::Argument) = x.name == y.name && x.value == y.value
-(==)(x::Command, y::Command) = x.name == y.name && x.value == y.value
-(==)(x::Option, y::Option) = x.short == y.short && x.long == y.long && x.argcount == y.argcount && x.value == y.value
-(==)(x::BranchPattern, y::BranchPattern) = x.children == y.children
+Base.:(==)(x::Argument, y::Argument) = x.name == y.name && x.value == y.value
+Base.:(==)(x::Command, y::Command) = x.name == y.name && x.value == y.value
+Base.:(==)(x::Option, y::Option) = x.short == y.short && x.long == y.long && x.argcount == y.argcount && x.value == y.value
+Base.:(==)(x::BranchPattern, y::BranchPattern) = x.children == y.children
 
 function patternmatch(pattern::LeafPattern, left, collected=Pattern[])
     pos, match = single_match(pattern, left)
