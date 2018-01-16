@@ -599,7 +599,7 @@ function docopt(doc::AbstractString,
     extras(help, version, args, doc)
     matched, left, collected = patternmatch(fix(pattern), args)
     if matched && isempty(left)
-        ret = Dict{AbstractString,Any}()
+        ret = Dict{String,Any}()
         for a in vcat(flat(pattern), collected)
             ret[name(a)] = a.value
         end
