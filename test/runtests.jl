@@ -1,27 +1,25 @@
-module TestDocOpt
-
 using Base.Test
 
 using DocOpt  # import docopt method
-import DocOpt: DocOptExit,
-               DocOptLanguageError,
-               # patterns
-               Option,
-               Argument,
-               Command,
-               Required,
-               Optional,
-               OneOrMore,
-               Either,
-               OptionsShortcut,
-               # internal methods (only common ones)
-               patternmatch,
-               fix,
-               fix_identities
+import DocOpt:
+    DocOptExit,
+    DocOptLanguageError,
+    # patterns
+    Option,
+    Argument,
+    Command,
+    Required,
+    Optional,
+    OneOrMore,
+    Either,
+    OptionsShortcut,
+    # internal methods (only common ones)
+    patternmatch,
+    fix,
+    fix_identities
 
-function test_pattern_flat()
+@testset "pattern_flat" begin
     flat = DocOpt.flat
-
     @test flat(Required([OneOrMore([Argument("N")]),
                          Option("-a"),
                          Argument("M")])) ==
@@ -32,7 +30,7 @@ function test_pattern_flat()
         [OptionsShortcut()]
 end
 
-function test_option()
+@testset "option" begin
     @test Option("-h") == Option("-h", nothing, 0, false)
     @test Option("--help") == Option(nothing, "--help", 0, false)
     @test Option("-h --help") == Option("-h", "--help", 0, false)
@@ -57,15 +55,14 @@ function test_option()
     @test Option("-h TOPIC  Descripton... [dEfAuLt: 2]") == Option("-h", nothing, 1, "2")
 end
 
-function test_option_name()
+@testset "option_name" begin
     name = DocOpt.name
-
     @test name(Option("-h", nothing)) == "-h"
     @test name(Option("-h", "--help")) == "--help"
     @test name(Option(nothing, "--help")) == "--help"
 end
 
-function test_commands()
+@testset "commands" begin
     @test docopt("Usage: prog add", "add") == Dict("add" => true)
     @test docopt("Usage: prog [add]", "") == Dict("add" => false)
     @test docopt("Usage: prog [add]", "add") == Dict("add" => true)
@@ -76,23 +73,21 @@ function test_commands()
     @test_throws DocOptExit docopt("Usage: prog a b", "b a"; exit_on_error=false)
 end
 
-function test_formal_usage()
+@testset "formal_usage" begin
     doc = """
     Usage: prog [-hv] ARG
            prog N M
 
     prog is a program."""
-
     usage, = DocOpt.parse_section("usage:", doc)
     @test usage == "Usage: prog [-hv] ARG\n       prog N M"
     @test DocOpt.formal_usage(usage) == "( [-hv] ARG ) | ( N M )"
 end
 
-function test_parse_argv()
+@testset "parse_argv" begin
     o = [Option("-h"), Option("-v", "--verbose"), Option("-f", "--file", 1)]
     ts = s -> DocOpt.Tokens(s, DocOptExit)
     parse_argv = DocOpt.parse_argv
-
     @test parse_argv(ts(""), o) == []
     @test parse_argv(ts("-h"), o) == [Option("-h", nothing, 0, true)]
     @test parse_argv(ts("-h --verbose"), o) == [Option("-h", nothing, 0, true), Option("-v", "--verbose", 0, true)]
@@ -116,10 +111,9 @@ function test_parse_argv()
     ]
 end
 
-function test_parse_pattern()
+@testset "parse_pattern" begin
     o = [Option("-h"), Option("-v", "--verbose", 0, false), Option("-f", "--file", 1, nothing)]
     parse_pattern = DocOpt.parse_pattern
-
     @test parse_pattern("[ -h ]", o) == Required([Optional([Option("-h")])])
     @test parse_pattern("[ ARG ...]", o) == Required([Optional([OneOrMore([Argument("ARG")])])])
     @test parse_pattern("[ -h | -v ]", o) == Required([Optional([Either([Option("-h"),
@@ -156,7 +150,7 @@ function test_parse_pattern()
     @test parse_pattern("add", o) == Required([Command("add")])
 end
 
-function test_option_match()
+@testset "option_match" begin
     @test patternmatch(Option("-a", nothing, 0, false), [Option("-a", nothing, 0, true)]) ==
         (true, [], [Option("-a", nothing, 0, true)])
     @test patternmatch(Option("-a", nothing, 0, false), [Option("-x", nothing, 0, false)]) ==
@@ -172,7 +166,7 @@ function test_option_match()
         (true, [Option("-a", nothing, 0, false)], [Option("-a", nothing, 0, true)])
 end
 
-function test_argument_match()
+@testset "argument_match" begin
     @test patternmatch(Argument("N"), [Argument(nothing, 9)]) ==
         (true, [], [Argument("N", 9)])
     @test patternmatch(Argument("N"), [Option("-x")]) ==
@@ -183,7 +177,7 @@ function test_argument_match()
         (true, [Argument(nothing, 0)], [Argument("N", 9)])
 end
 
-function test_command_match()
+@testset "command_match" begin
     @test patternmatch(Command("c"), [Argument(nothing, "c")]) ==
         (true, [], [Command("c", true)])
     @test patternmatch(Command("c"), [Option("-x")]) ==
@@ -194,7 +188,7 @@ function test_command_match()
         (true, [], [Command("rm", true)])
 end
 
-function test_optional_match()
+@testset "optional_match" begin
     @test patternmatch(Optional([Option("-a")]), [Option("-a")]) ==
         (true, [], [Option("-a")])
     @test patternmatch(Optional([Option("-a")]), []) ==
@@ -213,7 +207,7 @@ function test_optional_match()
         (true, [Option("-x")], [Option("-a"), Option("-b")])
 end
 
-function test_required_match()
+@testset "required_match" begin
     @test patternmatch(Required([Option("-a")]), [Option("-a")]) ==
         (true, [], [Option("-a")])
     @test patternmatch(Required([Option("-a")]), []) ==
@@ -224,7 +218,7 @@ function test_required_match()
         (false, [Option("-a")], [])
 end
 
-function test_either_match()
+@testset "either_match" begin
     @test patternmatch(Either([Option("-a", nothing, 0, nothing), Option("-b", nothing, 0, nothing)]), [Option("-a", nothing, 0, nothing)]) ==
         (true, [], [Option("-a", nothing, 0, nothing)])
     @test patternmatch(Either([Option("-a", nothing, 0, nothing), Option("-b", nothing, 0, nothing)]), [Option("-a", nothing, 0, nothing), Option("-b", nothing, 0, nothing)]) ==
@@ -239,7 +233,7 @@ function test_either_match()
         (true, [], [Argument("N", 1), Argument("M", 2)])
 end
 
-function test_one_or_more_match()
+@testset "one_or_more_match" begin
     @test patternmatch(OneOrMore([Argument("N")]), [Argument(nothing, 9)]) ==
         (true, [], [Argument("N", 9)])
     @test patternmatch(OneOrMore([Argument("N")]), []) ==
@@ -260,7 +254,7 @@ function test_one_or_more_match()
         (true, [], [Argument("N", 9)])
 end
 
-function test_list_argument_match()
+@testset "list_argument_match" begin
     @test patternmatch(fix(Required([Argument("N"), Argument("N")])),
                        [Argument(nothing, "1"), Argument(nothing, "2")]) ==
         (true, [], [Argument("N", ["1", "2"])])
@@ -275,7 +269,7 @@ function test_list_argument_match()
         (true, [], [Argument("N", ["1", "2"])])
 end
 
-function test_basic_pattern_matching()
+@testset "basic_pattern_matching" begin
     # ( -a N [ -x Z ] )
     pattern = Required([Option("-a"), Argument("N"),
                         Optional([Option("-x"), Argument("Z")])])
@@ -294,9 +288,8 @@ function test_basic_pattern_matching()
         (false, [Option("-x"), Argument(nothing, 9), Argument(nothing, 5)], [])
 end
 
-function test_pattern_either()
+@testset "pattern_either" begin
     transform = DocOpt.transform
-
     @test transform(Option("-a")) == Either([Required([Option("-a")])])
     @test transform(Argument("A")) == Either([Required([Argument("A")])])
     @test transform(Required([Either([Option("-a"), Option("-b")]),
@@ -315,9 +308,8 @@ function test_pattern_either()
                           Argument("N"), Argument("M")])])
 end
 
-function test_pattern_fix_repeating_arguments()
+@testset "pattern_fix_repeating_arguments" begin
     fix_repeating_arguments = DocOpt.fix_repeating_arguments
-
     @test fix_repeating_arguments(Option("-a")) == Option("-a")
     @test fix_repeating_arguments(Argument("N", nothing)) == Argument("N", nothing)
     @test fix_repeating_arguments(Required([Argument("N"), Argument("N")])) ==
@@ -326,30 +318,28 @@ function test_pattern_fix_repeating_arguments()
         Either([Argument("N", []), OneOrMore([Argument("N", [])])])
 end
 
-function test_set()
+@testset "set" begin
     @test Argument("N") == Argument("N")
     @test Set([Argument("N"), Argument("N")]) == Set([Argument("N")])
 end
 
-function test_pattern_fix_identities_1()
+@testset "pattern_fix_identities_1" begin
     pattern = Required([Argument("N"), Argument("N")])
-
     @test pattern.children[1] == pattern.children[2]
     @test pattern.children[1] !== pattern.children[2]
     fix_identities(pattern)
     @test pattern.children[1] === pattern.children[2]
 end
 
-function test_pattern_fix_identities_2()
+@testset "pattern_fix_identities_2" begin
     pattern = Required([Optional([Argument("X"), Argument("N")]), Argument("N")])
-
     @test pattern.children[1].children[2] == pattern.children[2]
     @test pattern.children[1].children[2] !== pattern.children[2]
     fix_identities(pattern)
     @test pattern.children[1].children[2] === pattern.children[2]
 end
 
-function test_long_options_error_handling()
+@testset "long_options_error_handling" begin
     @test_throws DocOptExit docopt("Usage: prog", "--non-existent"; exit_on_error=false)
     @test_throws DocOptExit docopt("Usage: prog [--version --verbose]\nOptions: --version\n --verbose", "--ver"; exit_on_error=false)
 
@@ -362,30 +352,28 @@ function test_long_options_error_handling()
     @test_throws DocOptExit docopt("Usage: prog --long\nOptions: --long", "--long=ARG"; exit_on_error=false)
 end
 
-function test_short_options_error_handling()
+@testset "short_options_error_handling" begin
     @test_throws DocOptLanguageError docopt("Usage: prog -x\nOptions: -x  this\n -x  that"; exit_on_error=false)
     @test_throws DocOptExit docopt("Usage: prog", "-x"; exit_on_error=false)
     @test_throws DocOptLanguageError docopt("Usage: prog -o\nOptions: -o ARG"; exit_on_error=false)
     @test_throws DocOptExit docopt("Usage: prog -o ARG\nOptions: -o ARG", "-o"; exit_on_error=false)
 end
 
-function test_matching_paren()
+@testset "matching_paren" begin
     @test_throws DocOptLanguageError docopt("Usage: prog [a [b]"; exit_on_error=false)
-
     # DocOptLanguageError
     #@test_throws DocOptLanguageError docopt("Usage: prog [a [b] ] c)"; exit_on_error=false)
 end
 
-function test_allow_double_dash()
+@testset "allow_double_dash" begin
     @test docopt("usage: prog [-o] [--] <arg>\nkptions: -o", "-- -o") ==
         Dict("-o" => false, "<arg>" => "-o", "--" => true)
     @test docopt("usage: prog [-o] [--] <arg>\nkptions: -o", "-o 1") ==
         Dict("-o" => true, "<arg>" => "1", "--" => false)
-
     @test_throws DocOptExit docopt("usage: prog [-o] <arg>\noptions:-o", "-- -o"; exit_on_error=false)
 end
 
-function test_docopt()
+@testset "docopt" begin
     doc = """Usage: prog [-v] A
 
              Options: -v  Be verbose."""
@@ -420,25 +408,19 @@ function test_docopt()
     #@test_throws Exception docopt(doc, "--hel"; exit_on_error=false)
 end
 
-function test_language_errors()
+@testset "language_errors" begin
     @test_throws DocOptLanguageError docopt("no usage with colon here"; exit_on_error=false)
     @test_throws DocOptLanguageError docopt("usage: here \n\n and again usage: here"; exit_on_error=false)
 end
 
-function test_issue_40()
+@testset "issue_40" begin
     # SystemExit (in Python)
     # NOTE: This test really exits the program and the rest of the tests will be ignored!
     #@test_throws docopt("usage: prog --help-commands | --help", "--help")
-
     @test docopt("usage: prog --aabb | --aa", "--aa") == Dict("--aabb" => false, "--aa" => true)
 end
 
-function test_issue_34_unicode_strings()
-    @test docopt(utf8("usage: prog [-o <a>]"), "") ==
-        Dict("-o" => false, "<a>" => nothing)
-end
-
-function test_count_multiple_flags()
+@testset "count_multiple_flags" begin
     @test docopt("usage: prog [-v]", "-v") == Dict("-v" => true)
     @test docopt("usage: prog [-vv]", "") == Dict("-v" => 0)
     @test docopt("usage: prog [-vv]", "-v") == Dict("-v" => 1)
@@ -449,7 +431,7 @@ function test_count_multiple_flags()
     @test docopt("usage: prog [--ver --ver]", "--ver --ver") == Dict("--ver" => 2)
 end
 
-function test_any_options_parameter()
+@testset "any_options_parameter" begin
     doc = "usage: prog [options]"
     @test_throws DocOptExit docopt(doc, "-foo --bar --spam=eggs"; exit_on_error=false)
     @test_throws DocOptExit docopt(doc, "--foo --bar --bar"; exit_on_error=false)
@@ -457,7 +439,7 @@ function test_any_options_parameter()
     @test_throws DocOptExit docopt(doc, "--long=arg, --long=another"; exit_on_error=false)
 end
 
-function test_default_value_for_positional_arguments()
+@testset "default_value_for_positional_arguments" begin
     doc = """Usage: prog [--data=<data>...]\n
              Options:
              \t-d --data=<arg>    Input data [default: x]
@@ -476,15 +458,14 @@ function test_default_value_for_positional_arguments()
     @test a == Dict("--data" => ["this"])
 end
 
-function test_issue_59()
+@testset "issue_59" begin
     @test docopt("usage: prog --long=<a>", "--long=") == Dict("--long" => "")
     @test docopt("""usage: prog -l <a>
                     options: -l <a>""", ["-l", ""]) == Dict("-l" => "")
 end
 
-function test_options_first()
+@testset "options_first" begin
     doc = "usage: prog [--opt] [<args>...]"
-
     @test docopt(doc, "--opt this that") ==
         Dict("--opt" => true, "<args>" => ["this", "that"])
     @test docopt(doc, "this that --opt") ==
@@ -493,54 +474,50 @@ function test_options_first()
         Dict("--opt" => false, "<args>" => ["this", "that", "--opt"])
 end
 
-function test_issue_68_options_shortcut_does_not_include_options_in_usage_pattern()
+@testset "issue_68_options_shortcut_does_not_include_options_in_usage_pattern" begin
     args = docopt("usage: prog [-ab] [options]\noptions: -x\n -y", "-ax")
-
     @test args["-a"] === true
     @test args["-b"] === false
     @test args["-x"] === true
     @test args["-y"] === false
 end
 
-function test_issue_65_evaluate_argv_when_called_not_when_imported()
+@testset "issue_65_evaluate_argv_when_called_not_when_imported" begin
     if !isempty(ARGS)
         throw(DomainError("ARGS should be empty"))
     end
-
     doc = "usage: prog [-ab]"
     push!(ARGS, "-a")
     @test docopt(doc) == Dict("-a" => true, "-b" => false)
-
     empty!(ARGS)
     push!(ARGS, "-b")
     @test docopt(doc) == Dict("-a" => false, "-b" => true)
 end
 
-function test_issue_71_double_dash_is_not_a_valid_option_argument()
+@testset "issue_71_double_dash_is_not_a_valid_option_argument" begin
     @test_throws DocOptExit docopt("usage: prog [--long=LEVEL] [--] <args>...", "--log -- 1 2"; exit_on_error=false)
     @test_throws DocOptExit docopt("""usage: prog [-l LEVEL] [--] <args>...
                                       options: -l LEVEL""", "-l -- 1 2"; exit_on_error=false)
 end
 
-usage = """usage: this
+@testset "parse_section" begin
+    usage = """usage: this
 
-usage:hai
-usage: this that
+    usage:hai
+    usage: this that
 
-usage: foo
-       bar
+    usage: foo
+           bar
 
-PROGRAM USAGE:
- foo
- bar
-usage:
-\ttoo
-\ttar
-Usage: eggs spam
-BAZZ
-usage: pit stop"""
-
-function test_parse_section()
+    PROGRAM USAGE:
+     foo
+     bar
+    usage:
+    \ttoo
+    \ttar
+    Usage: eggs spam
+    BAZZ
+    usage: pit stop"""
     parse_section = DocOpt.parse_section
 
     @test isempty(parse_section("usage:", "foo bar fizz buzz"))
@@ -557,46 +534,3 @@ function test_parse_section()
     @test parse_section("usage:", usage)[7] == "Usage: eggs spam"
     @test parse_section("usage:", usage)[8] == "usage: pit stop"
 end
-
-test_pattern_flat()
-test_option()
-test_option_name()
-test_commands()
-test_formal_usage()
-test_parse_argv()
-test_parse_pattern()
-test_option_match()
-test_argument_match()
-test_command_match()
-test_optional_match()
-test_required_match()
-test_either_match()
-test_one_or_more_match()
-test_list_argument_match()
-test_basic_pattern_matching()
-test_pattern_either()
-test_pattern_fix_repeating_arguments()
-test_set()
-test_pattern_fix_identities_1()
-test_pattern_fix_identities_2()
-test_long_options_error_handling()
-test_short_options_error_handling()
-test_matching_paren()
-test_allow_double_dash()
-test_docopt()
-test_language_errors()
-test_issue_40()
-if VERSION < v"0.5-"
-    test_issue_34_unicode_strings()
-end
-test_any_options_parameter()
-test_count_multiple_flags()
-test_default_value_for_positional_arguments()
-test_issue_59()
-test_options_first()
-test_issue_68_options_shortcut_does_not_include_options_in_usage_pattern()
-test_issue_65_evaluate_argv_when_called_not_when_imported()
-test_issue_71_double_dash_is_not_a_valid_option_argument()
-test_parse_section()
-
-end  # TestDocOpt
