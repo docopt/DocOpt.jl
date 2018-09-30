@@ -1,4 +1,4 @@
-using Base.Test
+using Test
 
 using DocOpt  # import docopt method
 import DocOpt:

@@ -4,10 +4,12 @@ module DocOpt
 
 export docopt
 
+using Printf, Dates
+
 # port of str.partition in Python
 function partition(s::AbstractString, delim::AbstractString)
-    range = search(s, delim)
-    if length(range) == 0
+    range = findfirst(delim, s)
+    if range == nothing
         # no match
         return s, "", ""
     elseif length(range) == 1
@@ -59,8 +61,8 @@ mutable struct Option <: LeafPattern
     function Option(option_description::AbstractString)
         short, long, argcount, value = nothing, nothing, 0, false
         options, _, description = partition(strip(option_description), "  ")
-        options = replace(options, ',', ' ')
-        options = replace(options, '=', ' ')
+        options = replace(options, ',' => ' ')
+        options = replace(options, '=' => ' ')
         for s in split(options)
             if startswith(s, "--")
                 long = s
@@ -108,13 +110,13 @@ mutable struct Tokens
         new(source, error)
     end
     function Tokens(source::AbstractString, error=DocOptLanguageError)
-        source = replace(source, r"([\[\]\(\)\|]|\.\.\.)", s -> " " * s * " ")
-        source = matchall(r"\S*<.*?>|\S+", source)
+        source = replace(source, r"([\[\]\(\)\|]|\.\.\.)" => s -> " " * s * " ")
+        source = collect((m.match for m in eachmatch(r"\S*<.*?>|\S+", source)))
         new(source, error)
     end
 end
 
-function Base.iteratorsize(::Type{Tokens})
+function IteratorSize(::Type{Tokens})
     return Base.SizeUnknown()
 end
 
@@ -259,7 +261,7 @@ function flat(pattern::BranchPattern, types=[])
     if typeof(pattern) in types
         return [pattern]
     else
-        return reduce(vcat, Pattern[], [flat(child, types) for child in pattern.children])
+        return reduce(vcat, [flat(child, types) for child in pattern.children], init=Pattern[])
     end
 end
 
@@ -275,7 +277,7 @@ function fix_identities(pattern::Pattern, uniq=nothing)
     uniq = uniq === nothing ? unique(flat(pattern)) : uniq
     for (i, child) in enumerate(pattern.children)
         if !isa(child, BranchPattern)
-            pattern.children[i] = uniq[findfirst(uniq, child)]
+            pattern.children[i] = uniq[something(findfirst(isequal(child), uniq), 0)]
         else
             fix_identities(child, uniq)
         end
@@ -305,11 +307,11 @@ function transform(pattern::Pattern)
     result = Any[]
     groups = Any[Pattern[pattern]]
     while !isempty(groups)
-        children = shift!(groups)
+        children = popfirst!(groups)
         parents = [Required, Optional, OptionsShortcut, Either, OneOrMore]
         if any(map(t -> t in map(typeof, children), parents))
             child = first(filter(c -> typeof(c) in parents, children))
-            splice!(children, findfirst(children, child))
+            splice!(children, something(findfirst(isequal(child), children), 0))
             if isa(child, Either)
                 for c in child.children
                     push!(groups, vcat([c], children))
@@ -329,11 +331,11 @@ end
 Base.hash(pattern::Pattern) = pattern |> string |> hash
 
 Base.getindex(tokens::Tokens, i::Integer) = tokens.tokens[i]
-Base.start(tokens::Tokens) = 1
-Base.done(tokens::Tokens, i::Int) = i > endof(tokens.tokens)
-Base.next(tokens::Tokens, i::Int) = tokens.tokens[i], i + 1
+Base.iterate(tokens::Tokens) = isempty(tokens.tokens) ? nothing : (tokens.tokens[1], 2)
+Base.iterate(tokens::Tokens, i::Int) = (i > lastindex(tokens.tokens)) ? nothing : (tokens.tokens[i], i+1)
+Base.length(tokens::Tokens) = length(tokens.tokens)
 
-move!(tokens::Tokens)   = isempty(tokens.tokens) ? nothing : shift!(tokens.tokens)
+move!(tokens::Tokens)   = isempty(tokens.tokens) ? nothing : popfirst!(tokens.tokens)
 current(tokens::Tokens) = isempty(tokens.tokens) ? nothing : tokens[1]
 
 # parsers
@@ -471,7 +473,7 @@ function parse_atom(tokens, options)
         return parse_long(tokens, options)
     elseif startswith(token, '-') && !isdash(token)
         return parse_shorts(tokens, options)
-    elseif startswith(token, '<') && endswith(token, '>') || all(isupper, token)
+    elseif startswith(token, '<') && endswith(token, '>') || all(isuppercase, token)
         return [Argument(move!(tokens))]
     else
         return [Command(move!(tokens))]
@@ -504,7 +506,7 @@ end
 
 function parse_section(name, source)
     pattern = Regex("^([^\\n]*$name[^\\n]*\\n?(?:[ \\t].*?(?:\\n|\$))*)", "im")
-    map(strip, matchall(pattern, source))
+    map(strip, collect((m.match for m in eachmatch(pattern, source))))
 end
 
 function parse_defaults(doc)
@@ -523,7 +525,7 @@ end
 function formal_usage(section)
     _, _, section = partition(section, ':')
     words = split(strip(section))
-    program = shift!(words)
+    program = popfirst!(words)
     patterns = AbstractString[]
     for w in words
         if w == program
@@ -601,7 +603,7 @@ function docopt(doc::AbstractString,
         return ret
     end
     if exit_on_error
-        @printf(STDERR, "%s\n", docoptexit.usage)
+        @printf(stderr, "%s\n", docoptexit.usage)
         isinteractive() || exit(1)
     else
         throw(docoptexit)
