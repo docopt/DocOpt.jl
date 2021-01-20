@@ -1,6 +1,6 @@
 name = "DocOpt"
 uuid = "968ba79b-81e4-546f-ab3a-2eecfa62a9db"
-version = "0.4.1"
+version = "0.4.2"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
