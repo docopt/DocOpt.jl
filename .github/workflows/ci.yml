@@ -15,7 +15,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.0'
+            # The oldest version in our Project.toml
+          - '1.1'
           - '1'
           - 'nightly'
         os:
