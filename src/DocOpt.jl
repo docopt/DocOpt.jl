@@ -7,21 +7,17 @@ export docopt
 using Printf, Dates
 
 # port of str.partition in Python
-function partition(s::AbstractString, delim::AbstractString)
-    range = findfirst(delim, s)
-    if range == nothing
-        # no match
-        return s, "", ""
-    elseif length(range) == 1
-        # delim is a single character
-        return s[1:range[1]-1], delim, s[range[1]+1:end]
+function partition(str::AbstractString, delim::Union{AbstractString, AbstractChar})
+    indices = findfirst(delim, str)
+    if isnothing(indices)
+        empty_substring = SubString("")
+        return SubString(str), empty_substring, empty_substring
     else
-        start, stop = range
-        return s[1:start-1], delim, s[stop+1:end]
+        return SubString(str, 1, prevind(str, first(indices))),
+            SubString(delim isa AbstractChar ? string(delim) : delim),
+            SubString(str, nextind(str, last(indices)))
     end
 end
-
-partition(s::AbstractString, delim::Char) = partition(s::AbstractString, string(delim))
 
 struct DocOptLanguageError <: Exception
     msg::AbstractString
