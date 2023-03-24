@@ -606,4 +606,30 @@ function docopt(doc::AbstractString,
     end
 end
 
+using SnoopPrecompile
+
+@precompile_setup begin
+    doc = """Naval Fate.
+
+    Usage:
+      naval_fate.jl ship new <name>...
+      naval_fate.jl ship <name> move <x> <y> [--speed=<kn>]
+      naval_fate.jl ship shoot <x> <y>
+      naval_fate.jl mine (set|remove) <x> <y> [--moored|--drifting]
+      naval_fate.jl -h | --help
+      naval_fate.jl --version
+
+    Options:
+      -h --help     Show this screen.
+      --version     Show version.
+      --speed=<kn>  Speed in knots [default: 10].
+      --moored      Moored (anchored) mine.
+      --drifting    Drifting mine.
+
+    """
+    @precompile_all_calls begin
+        docopt(doc, ["ship", "new", "BoatyMcBoatFace"]; version=v"2.0.0")
+    end
+end
+
 end  # DocOpt
