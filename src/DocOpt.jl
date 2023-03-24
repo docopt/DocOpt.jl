@@ -1,5 +1,3 @@
-__precompile__()
-
 module DocOpt
 
 export docopt
