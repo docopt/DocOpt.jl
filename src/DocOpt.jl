@@ -22,10 +22,12 @@ end
 struct DocOptLanguageError <: Exception
     msg::AbstractString
 end
+Base.showerror(io::IO, e::DocOptLanguageError) = print(io, "DocOptLanguageError: ", e.usage)
 
 struct DocOptExit <: Exception
     usage::AbstractString
 end
+Base.showerror(io::IO, e::DocOptExit) = print(io, "DocOptExit: ", e.usage)
 
 abstract type Pattern end
 abstract type LeafPattern <: Pattern end
